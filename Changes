@@ -1,7 +1,4 @@
 Revision history for Catmandu-Store-DBI
 
-0.2003  Extracted from the Catmandu core
-
-0.01    Date/time
-        First version, released on an unsuspecting world.
-
+0.02	2013-06-12
+	- initial release

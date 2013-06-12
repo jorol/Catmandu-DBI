@@ -1,3 +1,4 @@
+!.gitignore
 blib/
 .build/
 _build/
@@ -7,10 +8,14 @@ Build
 !Build/
 Build.bat
 .last_cover_stats
-Makefile
+Makefile*
 Makefile.old
-MANIFEST.bak
+MANIFEST*
 META.yml
 MYMETA.yml
 nytprof.out
 pm_to_blib
+LICENSE
+META*
+MYMETA*
+Catmandu-Store-DBI*
