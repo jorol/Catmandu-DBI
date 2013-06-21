@@ -13,6 +13,7 @@ my $builder = Module::Build->new(
         'perl' => '5.10.1',
         'Catmandu' => '0.2003',
         'DBI' => '1.616',
+        'namespace::clean' = >'0.24',
     },
     add_to_cleanup     => [ 'Catmandu-Store-DBI-*' ],
     create_makefile_pl => 'traditional',
