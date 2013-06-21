@@ -2,6 +2,9 @@ package Catmandu::Store::DBI;
 
 use namespace::clean;
 use Catmandu::Sane;
+
+our $VERSION = "0.02";
+
 use DBI;
 use Moo;
 
@@ -269,11 +272,11 @@ Create or retieve a bag with name $name. Returns a Catmandu::Bag.
 
 =head1 AUTHOR
 
-Nicolas Steenlant, C<< <nicolas.steenlant@ugent.be> >>
+Nicolas Steenlant, C<< <nicolas.steenlant at ugent.be> >>
 
 =head1 CONTRIBUTOR
 
-Vitali Peil, C<< <vitali.peil@uni-bielefeld.de> >>
+Vitali Peil C<< <vitali.peil at uni-bielefeld.de> >>
 
 =head1 SEE ALSO
 
