@@ -78,11 +78,7 @@ has _sql_count      => (is => 'ro', lazy => 1, builder => '_build_sql_count');
 has _add            => (is => 'ro', lazy => 1, builder => '_build_add');
 
 sub BUILD {
-    my $self = $_[0];
-    my $name = $self->name;
-    my $dbh  = $self->store->dbh;
-    my $sql  = "create table if not exists $name(id varchar(255) not null primary key, data longblob not null)";
-    $dbh->do($sql) or Catmandu::Error->throw($dbh->errstr);
+  $_[0]->_build_create;   
 }
 
 sub _build_sql_get {
@@ -128,7 +124,24 @@ sub _build_add_mysql {
         $sth->finish;
     };
 }
-
+sub _build_add_postgres {
+  #see: http://stackoverflow.com/questions/15840922/where-not-exists-in-postgresql-gives-syntax-error
+  my $self = $_[0];
+  my $name = $self->name;
+  my $dbh  = $self->store->dbh;
+  my $sql_update = "update $name set data=? where id=?";
+  my $sql_insert = "insert into $name select ?,? where not exists (select 1 from $name where id=?)";
+  sub {
+      my $sth = $dbh->prepare_cached($sql_update) or Catmandu::Error->throw($dbh->errstr);
+      $sth->execute($_[1], $_[0]) or Catmandu::Error->throw($sth->errstr);
+      unless ($sth->rows) {
+          $sth->finish;
+          $sth = $dbh->prepare_cached($sql_insert) or Catmandu::Error->throw($dbh->errstr);
+          $sth->execute($_[0], $_[1], $_[0]) or Catmandu::Error->throw($sth->errstr);
+          $sth->finish;
+      }
+  };
+}
 sub _build_add_generic {
     my $self = $_[0];
     my $name = $self->name;
@@ -147,11 +160,37 @@ sub _build_add_generic {
     };
 }
 
+sub _build_create {
+  my $self = $_[0];
+  my $driver_name = $self->store->dbh->{Driver}{Name} // "";
+  if($driver_name =~ /pg/i){ return $self->_build_create_postgres }
+  $self->_build_create_generic;
+}
+sub _build_create_postgres {
+  my $self = $_[0];
+  my $name = $self->name;
+  my $dbh  = $self->store->dbh;
+  #requires Postgres 9.1
+  #todo: get rid of this annoying message on stderr:
+  #NOTICE:  relation "$name" already exists, skipping
+  my $sql  = "create table if not exists $name(id varchar(255) not null primary key, data bytea not null)";
+  $dbh->do($sql) or Catmandu::Error->throw($dbh->errstr);
+}
+sub _build_create_generic {
+  my $self = $_[0];
+  my $name = $self->name;
+  my $dbh  = $self->store->dbh;
+  my $sql  = "create table if not exists $name(id varchar(255) not null primary key, data longblob not null)";
+  $dbh->do($sql) or Catmandu::Error->throw($dbh->errstr);
+}
+
+
 sub _build_add {
     my $self = $_[0];
     my $driver_name = $self->store->dbh->{Driver}{Name} // "";
-    if ($driver_name =~ /sqlite/i) { return $self->_build_add_sqlite }
-    if ($driver_name =~ /mysql/i)  { return $self->_build_add_mysql }
+    if ($driver_name =~ /sqlite/i) { return $self->_build_add_sqlite; }
+    if ($driver_name =~ /mysql/i)  { return $self->_build_add_mysql; }
+    if($driver_name =~ /pg/i){ return $self->_build_add_postgres; }
     return $self->_build_add_generic;
 }
 
