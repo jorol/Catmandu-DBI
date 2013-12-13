@@ -65,6 +65,7 @@ package Catmandu::Store::DBI::Bag;
 
 use Catmandu::Sane;
 use Moo;
+use Catmandu::Iterator;
 
 with 'Catmandu::Bag';
 with 'Catmandu::Serializer';
@@ -255,6 +256,92 @@ sub count {
   $sth->finish;
   $n;
 }
+#test
+#mysql:     select * from <bag> limit <offset>,<limit>
+#postgres:  select * from <bag> limit <limit> offset <offset>
+#sqlite:    select * from <bag> limit <offset>,<limit>
+#           select * from <bag> limit <limit> offset <offset>
+
+has _sql_slice  => (is => 'ro', lazy => 1, builder => '_build_sql_slice');
+
+
+sub _build_sql_slice {
+  my $self = $_[0];
+  my $driver_name = $self->store->dbh->{Driver}{Name} // "";
+  if ($driver_name =~ /sqlite/i) { return $self->_build_slice_sqlite; }
+  if ($driver_name =~ /mysql/i)  { return $self->_build_slice_mysql; }
+  if($driver_name =~ /pg/i){ return $self->_build_slice_postgres; } 
+  die("not supported");
+}
+sub _build_slice_sqlite { 
+  my $self = $_[0];
+  my $name = $self->name;
+  my $dbh = $self->store->dbh;
+  my $sql = "SELECT data FROM $name LIMIT ?,?";
+
+  sub {
+    my($start,$limit)=@_;
+    my $sth = $dbh->prepare_cached($sql) or Catmandu::Error->throw($dbh->errstr);
+    $sth->execute($start,$limit) or Catmandu::Error->throw($sth->errstr);
+    $sth;
+  };
+}
+sub _build_slice_mysql { 
+  my $self = $_[0];
+  my $name = $self->name;
+  my $dbh = $self->store->dbh;
+  my $sql = "SELECT data FROM $name LIMIT ?,?";
+
+  sub {
+    my($start,$limit)=@_;
+    my $sth = $dbh->prepare_cached($sql) or Catmandu::Error->throw($dbh->errstr);
+    $sth->execute($start,$limit) or Catmandu::Error->throw($sth->errstr);
+    $sth;
+  };
+}
+sub _build_slice_postgres { 
+  my $self = $_[0];
+  my $name = $self->name;
+  my $dbh = $self->store->dbh;
+  my $sql = "SELECT data FROM $name LIMIT ? OFFSET ?";
+
+  sub {
+    my($start,$limit)=@_;
+    my $sth = $dbh->prepare_cached($sql) or Catmandu::Error->throw($dbh->errstr);
+    $sth->execute($limit,$start) or Catmandu::Error->throw($sth->errstr);
+    $sth;
+  };
+}
+sub slice {
+  my($self,$start,$total)=@_;
+  $start //= 0;
+  my $dbh = $self->store->dbh;
+
+  Catmandu::Iterator->new(sub { sub {
+    if(defined $total){
+      $total || return;
+    }
+
+    state $sth;
+    state $row;
+    unless ($sth) {
+      if(defined($total)){
+        $sth = $self->_sql_slice()->($start,$total);        
+      }else{
+        $sth = $dbh->prepare($self->_sql_generator) or Catmandu::Error->throw($dbh->errstr);
+        $sth->execute;
+      }
+    }
+    if($row = $sth->fetchrow_arrayref){
+      return $self->deserialize($row->[0]);
+    }
+    $sth->finish;
+    return;
+
+  }});
+
+}
+#test
 
 1;
 
