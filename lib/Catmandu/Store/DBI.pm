@@ -10,9 +10,13 @@ use Moo;
 
 with 'Catmandu::Store';
 
-has data_source => (is => 'ro', required => 1);
-has username    => (is => 'ro', default => sub { '' });
-has password    => (is => 'ro', default => sub { '' });
+has data_source => (
+    is       => 'ro', 
+    required => 1, 
+    trigger  => { $_[0] =~ /^DBI:/i ? $_[0] : "DBI:".$_[0] }
+);
+has username => (is => 'ro', default => sub { '' });
+has password => (is => 'ro', default => sub { '' });
 
 has dbh => (
     is       => 'ro',
@@ -232,9 +236,9 @@ Version 0.02
     use Catmandu::Store::DBI;
 
     my $store = Catmandu::Store::DBI->new(
-        data_source => 'DBI:mysql:database=test',
-        username => '',
-        password => '',
+        data_source => 'DBI:mysql:database=test', # prefix "DBI:" optionl
+        username => '', # optional
+        password => '', # optional
     );
 
     my $obj1 = $store->bag->add({ name => 'Patrick' });
@@ -254,17 +258,23 @@ Version 0.02
     $store->bag->each(sub { ... });
     $store->bag->take(10)->each(sub { ... });
 
+The L<catmandu> command line client can be used like this:
+
+    catmandu import JSON to DBI --data_source SQLite:mydb.sqlite < data.json
+    
 =head1 DESCRIPTION
 
 A Catmandu::Store::DBI is a Perl package that can store data into
-DBI backed databases. The database as a whole is called a 'store'.
-Databases also have compartments (e.g. tables) called Catmandu::Bag-s.
+DBI backed databases. The database as a whole is called a 'store'
+(L<Catmandu::Store>. Databases also have compartments (e.g. tables) 
+called 'bags' (L<Catmandu::Bag>).
 
 =head1 METHODS
 
-=head2 new(data_source => $data_source )
+=head2 new(data_source => $data_source)
 
-Create a new Catmandu::Store::DBI store using a DBI $data_source.
+Create a new Catmandu::Store::DBI store using a DBI $data_source. The 
+prefix "DBI:" is added automatically if needed.
 
 =head2 bag($name)
 
