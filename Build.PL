@@ -22,8 +22,8 @@ my $builder = Module::Build->new(
             repository => 'https://github.com/LibreCat/Catmandu-Store-DBI.git',
             bugtracker => 'htps://github.com/LibreCat/Catmandu-Store-DBI/issues',
             homepage => 'https://github.com/LibreCat/Catmandu-Store-DBI',
-        }
-    }    
+        },
+    },
 );
 
 $builder->create_build_script;
