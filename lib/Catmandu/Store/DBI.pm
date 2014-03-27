@@ -142,6 +142,12 @@ sub _build_add_mysql {
 }
 
 sub _build_add_postgres {
+    our $pg_bytea;
+    state $package = __PACKAGE__;
+    unless ( $pg_bytea ) {
+        eval "require DBD::Pg;\$${package}::pg_bytea = DBD::Pg::PG_BYTEA;";
+    }
+
     # See http://stackoverflow.com/questions/15840922/where-not-exists-in-postgresql-gives-syntax-error
     my $self       = $_[0];
     my $name       = $self->name;
@@ -151,8 +157,16 @@ sub _build_add_postgres {
         my $dbh = $self->store->dbh;
         my $sth = $dbh->prepare_cached($sql_update)
             or Catmandu::Error->throw($dbh->errstr);
-        $sth->execute($_[1], $_[0])
+            
+        #special quoting for bytea in postgres:
+        #   https://rt.cpan.org/Public/Bug/Display.html?id=13180
+        #   http://www.nntp.perl.org/group/perl.dbi.users/2005/01/msg25370.html
+        $sth->bind_param(1,$_[1],{ pg_type => $pg_bytea });
+        $sth->bind_param(2,$_[0]);
+
+        $sth->execute 
             or Catmandu::Error->throw($sth->errstr);
+
         unless ($sth->rows) {
             $sth->finish;
             $sth = $dbh->prepare_cached($sql_insert)
