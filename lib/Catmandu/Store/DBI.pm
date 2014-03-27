@@ -2,6 +2,7 @@ package Catmandu::Store::DBI;
 
 use namespace::clean;
 use Catmandu::Sane;
+use Catmandu::Util qw(require_package);
 use DBI;
 use Moo;
 
@@ -142,29 +143,25 @@ sub _build_add_mysql {
 }
 
 sub _build_add_postgres {
-    our $pg_bytea;
-    state $package = __PACKAGE__;
-    unless ( $pg_bytea ) {
-        eval "require DBD::Pg;\$${package}::pg_bytea = DBD::Pg::PG_BYTEA;";
-    }
-
-    # See http://stackoverflow.com/questions/15840922/where-not-exists-in-postgresql-gives-syntax-error
-    my $self       = $_[0];
+    my ($self)     = @_;
+    my $pg         = require_package('DBD::Pg');
     my $name       = $self->name;
     my $sql_update = "update $name set data=? where id=?";
+    # see http://stackoverflow.com/questions/15840922/where-not-exists-in-postgresql-gives-syntax-error
     my $sql_insert = "insert into $name select ?,? where not exists (select 1 from $name where id=?)";
+
     sub {
         my $dbh = $self->store->dbh;
         my $sth = $dbh->prepare_cached($sql_update)
             or Catmandu::Error->throw($dbh->errstr);
-            
-        #special quoting for bytea in postgres:
-        #   https://rt.cpan.org/Public/Bug/Display.html?id=13180
-        #   http://www.nntp.perl.org/group/perl.dbi.users/2005/01/msg25370.html
-        $sth->bind_param(1,$_[1],{ pg_type => $pg_bytea });
+
+        # special quoting for bytea in postgres:
+        # https://rt.cpan.org/Public/Bug/Display.html?id=13180
+        # http://www.nntp.perl.org/group/perl.dbi.users/2005/01/msg25370.html
+        $sth->bind_param(1,$_[1], {pg_type => $pg->PG_BYTEA});
         $sth->bind_param(2,$_[0]);
 
-        $sth->execute 
+        $sth->execute
             or Catmandu::Error->throw($sth->errstr);
 
         unless ($sth->rows) {
