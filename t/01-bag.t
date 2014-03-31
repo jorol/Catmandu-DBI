@@ -27,7 +27,13 @@ if(!$driver_found){
 
     my($fh,$file);
     lives_ok(sub { 
-      ($fh,$file) = tempfile(UNLINK => 1);
+
+      #When you use File::Temp to create a temporary file/directory for SQLite databases, you need to remember: 
+      # tempfile may be locked exclusively
+      #from: http://search.cpan.org/~ishigaki/DBD-SQLite-1.42/lib/DBD/SQLite.pm
+
+      ($fh,$file) = tempfile(UNLINK => 1,EXLOCK => 0);
+
     }, "database file created");
 
     my $bag;
