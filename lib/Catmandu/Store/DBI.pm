@@ -2,7 +2,6 @@ package Catmandu::Store::DBI;
 
 use namespace::clean;
 use Catmandu::Sane;
-use Catmandu::Util qw(require_package);
 use DBI;
 use Moo;
 
@@ -73,6 +72,7 @@ package Catmandu::Store::DBI::Bag;
 use Catmandu::Sane;
 use Moo;
 use Catmandu::Iterator;
+use Catmandu::Util qw(require_package);
 
 with 'Catmandu::Bag';
 with 'Catmandu::Serializer';
