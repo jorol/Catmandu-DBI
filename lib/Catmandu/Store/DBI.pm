@@ -5,7 +5,7 @@ use Catmandu::Sane;
 use DBI;
 use Moo;
 
-our $VERSION = "0.031";
+our $VERSION = "0.04";
 
 with 'Catmandu::Store';
 
@@ -407,7 +407,7 @@ Catmandu::Store::DBI - A Catmandu::Store plugin for DBI based interfaces
 
 =head1 VERSION
 
-Version 0.02
+Version 0.04
 
 =head1 SYNOPSIS
 
@@ -439,7 +439,7 @@ Version 0.02
 The L<catmandu> command line client can be used like this:
 
     catmandu import JSON to DBI --data_source SQLite:mydb.sqlite < data.json
-    
+
 =head1 DESCRIPTION
 
 A Catmandu::Store::DBI is a Perl package that can store data into
