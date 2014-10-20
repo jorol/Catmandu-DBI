@@ -5,7 +5,7 @@ use Catmandu::Sane;
 use DBI;
 use Moo;
 
-our $VERSION = "0.04";
+our $VERSION = "0.042";
 
 with 'Catmandu::Store';
 
@@ -17,15 +17,35 @@ has data_source => (
 
 has username => ( is => 'ro', default => sub { '' } );
 has password => ( is => 'ro', default => sub { '' } );
+has timeout => ( is => 'ro' );
+has reconnect_after_timeout => (is => 'ro', default => sub { 0; });
 
-has dbh => (
-    is       => 'ro',
-    init_arg => undef,
-    lazy     => 1,
-    builder  => '_build_dbh',
-);
+sub dbh {
+    my $self = $_[0];
+    state $start_time = time;
+    state $dbh = $self->_build_dbh();
+    state $driver = $dbh->{Driver}{Name} // "";
 
-# Only mysql seems to need auto_reconnect for now
+    #mysql has built-in option 'mysql_auto_reconnect'
+    if($driver !~ /mysql/i && defined($self->timeout())){
+
+        if( (time - $start_time) > $self->timeout ){
+
+            #timeout $timeout reached => reconnecting?
+            if($self->reconnect_after_timeout || !($dbh->ping)){
+                #ping failed, so trying to reconnect";
+                $dbh->disconnect;
+                $dbh = $self->_build_dbh();
+            }
+            $start_time = time;
+
+        }
+
+    }
+
+    $dbh;
+}
+
 sub _build_dbh {
     my $self = $_[0];
     my $opts = {
@@ -64,7 +84,7 @@ sub transaction {
 }
 
 sub DEMOLISH {
-    $_[0]->dbh->disconnect if $_[0]->dbh;
+    $_[0]->dbh->disconnect() if $_[0]->dbh;
 }
 
 package Catmandu::Store::DBI::Bag;
@@ -210,6 +230,7 @@ sub _build_create_postgres {
     # requires al least Postgres 9.1
     # TODO get rid of this annoying warning:
     # 'NOTICE:  relation "$name" already exists, skipping'
+    local $SIG{__WARN__} = sub { print STDERR $_[0]; };
     my $sql = "create table if not exists $name(id varchar(255) not null primary key, data bytea not null)";
     $dbh->do($sql) or Catmandu::Error->throw($dbh->errstr);
 }
@@ -407,7 +428,7 @@ Catmandu::Store::DBI - A Catmandu::Store plugin for DBI based interfaces
 
 =head1 VERSION
 
-Version 0.04
+Version 0.041
 
 =head1 SYNOPSIS
 
@@ -444,15 +465,55 @@ The L<catmandu> command line client can be used like this:
 
 A Catmandu::Store::DBI is a Perl package that can store data into
 DBI backed databases. The database as a whole is called a 'store'
-(L<Catmandu::Store>. Databases also have compartments (e.g. tables) 
+(L<Catmandu::Store>. Databases also have compartments (e.g. tables)
 called 'bags' (L<Catmandu::Bag>).
 
 =head1 METHODS
 
 =head2 new(data_source => $data_source)
 
-Create a new Catmandu::Store::DBI store using a DBI $data_source. The 
+Create a new Catmandu::Store::DBI store using a DBI $data_source. The
 prefix "DBI:" is added automatically if needed.
+
+Extra options for method new:
+
+timeout
+
+        timeout for a inactive database handle.
+        when timeout is reached, Catmandu checks if the connection is still alive (by use of ping),
+        or it recreates the connection.
+
+        By default set to undef.
+
+reconnect_after_timeout
+
+        when timeout is reached, Catmandu does not check the connection, but simply reconnects.
+
+        By default set to '0'
+
+It's good practice to set the timeout high enough.
+When using transactions, one should avoid this situation:
+
+    $bag->store->transaction(sub{
+        $bag->add({ _id => "1" });
+        sleep $timeout;
+        $bag->add({ _id => "2" });
+    });
+
+The following warning appears:
+
+    commit ineffective with AutoCommit enabled at lib//Catmandu/Store/DBI.pm line 73.
+    DBD::SQLite::db commit failed: attempt to commit on inactive database handle
+
+This has the following reasons:
+
+    1.  first record added
+    2.  timeout is reached, the connection is recreated
+    3.  the option AutoCommit is set. So the database handle commits the current transaction. The first record is committed.
+    4.  this new connection handle is used now. We're still in the method "transaction", but there is no longer a real transaction at database level.
+    5.  second record is added (committed)
+    6.  commit is issued. But this unnecessary, so the database handle throws a warning.
+
 
 =head2 bag($name)
 

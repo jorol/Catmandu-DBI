@@ -13,27 +13,22 @@ my $driver_found = 1;
     eval {
         require DBD::SQLite;
     };
-    if($@){ 
+    if($@){
         $driver_found = 0;
     }
 }
-    
+
 
 if(!$driver_found){
 
-    plan skip_all => "database driver DBD::SQLite not found";   
+    plan skip_all => "database driver DBD::SQLite not found";
 
 }else{
 
     my($fh,$file);
-    lives_ok(sub { 
-
-      #When you use File::Temp to create a temporary file/directory for SQLite databases, you need to remember: 
-      # tempfile may be locked exclusively
-      #from: http://search.cpan.org/~ishigaki/DBD-SQLite-1.42/lib/DBD/SQLite.pm
-
+    lives_ok(sub {
+      #avoid exclusive lock on BSD
       ($fh,$file) = tempfile(UNLINK => 1,EXLOCK => 0);
-
     }, "database file created");
 
     my $bag;

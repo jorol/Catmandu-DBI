@@ -9,5 +9,6 @@ Makefile.PL
 MANIFEST*
 META.*
 MYMETA.*
-Catmandu-Store-DBI-*
+Catmandu-DBI-*
 !*.t
+_build_params
