@@ -1,4 +1,4 @@
-0.012 2015-01-08
+0.013 2015-01-08
   - Incorrect use of 'state' in function Catmandu::Store::DBI::dbh. Due to this bug, only one dbh
     could be stored.
 
