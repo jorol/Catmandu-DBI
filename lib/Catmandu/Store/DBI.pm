@@ -22,9 +22,19 @@ has reconnect_after_timeout => (is => 'ro', default => sub { 0; });
 
 sub dbh {
     my $self = $_[0];
-    state $start_time = time;
-    state $dbh = $self->_build_dbh();
-    state $driver = $dbh->{Driver}{Name} // "";
+
+    state $instances = {};
+
+    unless($instances->{$self}){
+        $instances->{$self} = {
+            start_time => time,
+            dbh => $self->_build_dbh()
+        };
+    }
+
+    my $dbh = $instances->{$self}->{dbh};
+    my $driver = $dbh->{Driver}{Name} // "";
+    my $start_time = $instances->{$self}->{start_time};
 
     #mysql has built-in option 'mysql_auto_reconnect'
     if($driver !~ /mysql/i && defined($self->timeout())){
@@ -36,8 +46,9 @@ sub dbh {
                 #ping failed, so trying to reconnect";
                 $dbh->disconnect;
                 $dbh = $self->_build_dbh();
+                $instances->{$self}->{dbh} = $dbh;
             }
-            $start_time = time;
+            $instances->{$self}->{start_time} = time;
 
         }
 

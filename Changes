@@ -1,3 +1,7 @@
+0.012 2015-01-08
+  - Incorrect use of 'state' in function Catmandu::Store::DBI::dbh. Due to this bug, only one dbh
+    could be stored.
+
 0.012 2014-10-02
   - Use of function tempfile in test scripts must set the option EXLOCK to '0', to avoid locking problems on BSD.
     This temporary file is used by SQLite, but EXLOCK is set to '1' on some systems.
