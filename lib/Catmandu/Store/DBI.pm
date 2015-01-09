@@ -5,7 +5,7 @@ use Catmandu::Sane;
 use DBI;
 use Moo;
 
-our $VERSION = "0.0421";
+our $VERSION = "0.0422";
 
 with 'Catmandu::Store';
 
@@ -199,7 +199,12 @@ sub _build_add_postgres {
             $sth->finish;
             $sth = $dbh->prepare_cached($sql_insert)
               or Catmandu::Error->throw($dbh->errstr);
-            $sth->execute( $_[0], $_[1], $_[0] )
+
+            $sth->bind_param(1,$_[0]);
+            $sth->bind_param(2,$_[1],{pg_type => $pg->PG_BYTEA});
+            $sth->bind_param(3,$_[0]);
+
+            $sth->execute()
               or Catmandu::Error->throw($sth->errstr);
             $sth->finish;
         }

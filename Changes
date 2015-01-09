@@ -1,3 +1,6 @@
+0.0132 2015-01-09
+  - BUG for DBD::Pg. When inserting data, column 'data' is not properly escaped als PG_BYTEA (see _build_add_postgres
+    in Catmandu::Store::DBI::Bag)
 0.0131 2015-01-09
   - Incorrect use of 'state' in function Catmandu::Store::DBI::dbh. Due to this bug, only one dbh
     could be stored. Now also the version in Catmandu::Store::DBI is raised
