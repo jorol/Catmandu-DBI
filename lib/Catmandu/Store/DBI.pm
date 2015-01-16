@@ -355,10 +355,10 @@ sub _build_sql_slice {
 sub _build_slice_sqlite {
     my $self = $_[0];
     my $name = $self->name;
-    my $dbh  = $self->store->dbh;
     my $sql  = "SELECT data FROM $name LIMIT ?,?";
 
     sub {
+        my $dbh  = $self->store->dbh;
         my ($start, $limit) = @_;
         my $sth = $dbh->prepare_cached($sql)
           or Catmandu::Error->throw($dbh->errstr);
@@ -371,10 +371,10 @@ sub _build_slice_sqlite {
 sub _build_slice_mysql {
     my $self = $_[0];
     my $name = $self->name;
-    my $dbh  = $self->store->dbh;
     my $sql  = "SELECT data FROM $name LIMIT ?,?";
 
     sub {
+        my $dbh  = $self->store->dbh;
         my ($start, $limit) = @_;
         my $sth = $dbh->prepare_cached($sql)
           or Catmandu::Error->throw($dbh->errstr);
@@ -387,10 +387,10 @@ sub _build_slice_mysql {
 sub _build_slice_postgres {
     my $self = $_[0];
     my $name = $self->name;
-    my $dbh  = $self->store->dbh;
     my $sql  = "SELECT data FROM $name LIMIT ? OFFSET ?";
 
     sub {
+        my $dbh  = $self->store->dbh;
         my ($start, $limit) = @_;
         my $sth = $dbh->prepare_cached($sql)
           or Catmandu::Error->throw($dbh->errstr);
@@ -403,7 +403,6 @@ sub _build_slice_postgres {
 sub slice {
     my ($self, $start, $total) = @_;
     $start //= 0;
-    my $dbh = $self->store->dbh;
 
     Catmandu::Iterator->new(
         sub {
@@ -412,6 +411,7 @@ sub slice {
                     $total || return;
                 }
 
+                my $dbh = $self->store->dbh;
                 state $sth;
                 state $row;
                 unless ($sth) {
