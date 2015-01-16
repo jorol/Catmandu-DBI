@@ -1,3 +1,9 @@
+0.0133 2015-01-16
+  - BUG in Catmandu::Store::DBI::Bag: a reference to the database handle is stored in a variable outside
+    the callback in function _build_create_*, and then used inside the callback. This only works as long as the
+    database handle is active. When working with web applications, where these stores are kept in memory,
+    and not used for a long time, this can lead to inactive database handles. Fix: direct reference from the callback
+    to the function "dbh" of the Catmandu::Store::DBI, that automatically reconnects if necessary.
 0.0132 2015-01-09
   - BUG for DBD::Pg. When inserting data, column 'data' is not properly escaped als PG_BYTEA (see _build_add_postgres
     in Catmandu::Store::DBI::Bag)
