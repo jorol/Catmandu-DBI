@@ -1,5 +1,5 @@
 package Catmandu::DBI;
-our $VERSION = "0.0132";
+our $VERSION = "0.0133";
 
 =head1 NAME
 

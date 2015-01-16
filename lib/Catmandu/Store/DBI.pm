@@ -5,7 +5,7 @@ use Catmandu::Sane;
 use DBI;
 use Moo;
 
-our $VERSION = "0.0422";
+our $VERSION = "0.0423";
 
 with 'Catmandu::Store';
 
