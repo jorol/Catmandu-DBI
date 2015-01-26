@@ -5,7 +5,7 @@ use Catmandu::Sane;
 use DBI;
 use Moo;
 
-our $VERSION = "0.0423";
+our $VERSION = "0.0424";
 
 with 'Catmandu::Store';
 
@@ -449,7 +449,7 @@ Catmandu::Store::DBI - A Catmandu::Store plugin for DBI based interfaces
 
 =head1 VERSION
 
-Version 0.041
+Version 0.0424
 
 =head1 SYNOPSIS
 
