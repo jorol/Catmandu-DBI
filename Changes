@@ -1,3 +1,6 @@
+0.0134 2015-01-26
+  - BUG in Catmandu::Store::DBI: method 'dbh' crashes during global destruction (after call to DEMOLISH). Fixed by not accessing
+    DBI interface during this fase.
 0.0133 2015-01-16
   - BUG in Catmandu::Store::DBI::Bag: a reference to the database handle is stored in a variable outside
     the callback in function _build_create_*, and then used inside the callback. This only works as long as the
