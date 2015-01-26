@@ -21,7 +21,7 @@ has timeout => ( is => 'ro' );
 has reconnect_after_timeout => (is => 'ro', default => sub { 0; });
 
 sub dbh {
-    my $self = $_[0];
+    my($self,$no_reconnect) = @_;
 
     state $instances = {};
 
@@ -33,6 +33,10 @@ sub dbh {
     }
 
     my $dbh = $instances->{$self}->{dbh};
+
+    #do NOT access driver attributes during global destruction!
+    return $dbh if $no_reconnect;
+
     my $driver = $dbh->{Driver}{Name} // "";
     my $start_time = $instances->{$self}->{start_time};
 
@@ -95,7 +99,8 @@ sub transaction {
 }
 
 sub DEMOLISH {
-    $_[0]->dbh->disconnect() if $_[0]->dbh;
+    my $dbh = $_[0]->dbh(1);
+    $dbh->disconnect() if $dbh;
 }
 
 package Catmandu::Store::DBI::Bag;
