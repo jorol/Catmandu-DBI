@@ -1,3 +1,7 @@
+0.0135 2015-04-14
+  - BUG in Catmandu::Store::DBI for MySQL. identifier 'id' is of type 'varchar', which is case insensitive.
+    This can easily be solved with the sql statement "alter table scans modify id varchar(255) binary".
+
 0.0134 2015-01-26
   - BUG in Catmandu::Store::DBI: method 'dbh' crashes during global destruction (after call to DEMOLISH). Fixed by not accessing
     DBI interface during this fase.

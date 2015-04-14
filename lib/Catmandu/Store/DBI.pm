@@ -5,7 +5,7 @@ use Catmandu::Sane;
 use DBI;
 use Moo;
 
-our $VERSION = "0.0424";
+our $VERSION = "0.0425";
 
 with 'Catmandu::Store';
 
@@ -241,6 +241,7 @@ sub _build_create {
     my $self = $_[0];
     my $driver_name = $self->store->dbh->{Driver}{Name} // "";
     if ($driver_name =~ /pg/i) { return $self->_build_create_postgres }
+    elsif ($driver_name =~ /mysql/i) { return $self->_build_create_mysql }
     $self->_build_create_generic;
 }
 
@@ -253,6 +254,15 @@ sub _build_create_postgres {
     # 'NOTICE:  relation "$name" already exists, skipping'
     local $SIG{__WARN__} = sub { print STDERR $_[0]; };
     my $sql = "create table if not exists $name(id varchar(255) not null primary key, data bytea not null)";
+    $dbh->do($sql) or Catmandu::Error->throw($dbh->errstr);
+}
+#varchar in mysql is case insensitive
+#cf. http://stackoverflow.com/questions/3396253/altering-mysql-table-column-to-be-case-sensitive
+sub _build_create_mysql {
+    my $self = $_[0];
+    my $name = $self->name;
+    my $dbh  = $self->store->dbh;
+    my $sql = "create table if not exists $name(id varchar(255) binary not null primary key, data longblob not null)";
     $dbh->do($sql) or Catmandu::Error->throw($dbh->errstr);
 }
 
