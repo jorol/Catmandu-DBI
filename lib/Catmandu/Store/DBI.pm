@@ -555,7 +555,11 @@ sub _build_slice_mysql {
 sub _build_slice_postgres {
     my $self = $_[0];
     my $name = $self->name;
-    my $sql  = "SELECT data FROM $name LIMIT ? OFFSET ?";
+    my $fields = "data";
+    if (my $mapping = $self->mapping) {
+        $fields .= ','.join(',', sort keys %$mapping);
+    }
+    my $sql = "SELECT $fields FROM $name LIMIT ? OFFSET ?";
 
     sub {
         my $dbh  = $self->store->dbh;
@@ -572,36 +576,42 @@ sub slice {
     my ($self, $start, $total) = @_;
     $start //= 0;
 
-    Catmandu::Iterator->new(
+    Catmandu::Iterator->new(sub {
         sub {
-            sub {
-                if (defined $total) {
-                    $total || return;
-                }
+            if (defined $total) {
+                $total || return;
+            }
 
-                my $dbh = $self->store->dbh;
-                state $sth;
-                state $row;
-                unless ($sth) {
-                    if (defined($total)) {
-                        $sth = $self->_sql_slice->($start, $total);
+            state $mapping = $self->mapping;
+            state $sth;
+            state $row;
+            unless ($sth) {
+                if (defined($total)) {
+                    $sth = $self->_sql_slice->($start, $total);
+                }
+                else {
+                    my $dbh = $self->store->dbh;
+                    $sth = $dbh->prepare($self->_sql_generator)
+                        or Catmandu::Error->throw($dbh->errstr);
+                    $sth->execute
+                        or Catmandu::Error->throw($sth->errstr);
+                }
+            }
+
+            if ($row = $sth->fetchrow_hashref) {
+                my $data = $self->deserialize($row->{data});
+                if ($mapping) {
+                    for my $field (keys %$mapping) {
+                        $data->{$field} = $row->{$field};
                     }
-                    else {
-                        $sth = $dbh->prepare($self->_sql_generator)
-                          or Catmandu::Error->throw($dbh->errstr);
-                        $sth->execute;
-                    }
                 }
-                if ($row = $sth->fetchrow_arrayref) {
-                    return $self->deserialize($row->[0]);
-                }
-                $sth->finish;
-                return;
+                return $data;
+            }
 
-              }
-        }
-    );
-
+            $sth->finish;
+            return;
+        };
+    });
 }
 
 1;
