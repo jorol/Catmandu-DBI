@@ -64,8 +64,8 @@ sub dbh {
 sub _build_dbh {
     my $self = $_[0];
     my $opts = {
-        AutoCommit           => 1,
-        RaiseError           => 1,
+        AutoCommit => 1,
+        RaiseError => 1,
         mysql_auto_reconnect => 1,
     };
     DBI->connect($self->data_source, $self->username, $self->password, $opts);
@@ -108,7 +108,7 @@ package Catmandu::Store::DBI::Bag;
 use Catmandu::Sane;
 use Moo;
 use Catmandu::Iterator;
-use Catmandu::Util qw(require_package);
+use Catmandu::Util qw(require_package is_value is_string is_array_ref);
 
 with 'Catmandu::Bag';
 with 'Catmandu::Serializer';
@@ -132,7 +132,7 @@ sub _build_sql_get {
     my ($self) = @_;
     my $name = $self->name;
     if (my $mapping = $self->mapping) {
-        my $fields = join ", ", sort keys %$mapping;
+        my $fields = join(',', sort keys %$mapping);
         "select data, $fields from $name where id=?";
     } else {
         "select data from $name where id=?";
@@ -313,7 +313,6 @@ sub _build_create_postgres {
         for my $field (sort keys %$mapping) {
             my $spec = $mapping->{$field};
             $sql .= $self->_postgres_create_index_sql($field) if $spec->{index};
-            say STDERR $self->_postgres_create_index_sql($field);
         }
     }
     $dbh->do($sql) or Catmandu::Error->throw($dbh->errstr);
@@ -375,15 +374,16 @@ sub get {
         or Catmandu::Error->throw($dbh->errstr);
     $sth->execute($id) or Catmandu::Error->throw($sth->errstr);
     my $data;
-    if (my $row = $sth->fetchrow_hashref) {
+    my $row = $sth->fetchrow_hashref;
+    $sth->finish;
+    if ($row) {
         $data = $self->deserialize($row->{data});
         if (my $mapping = $self->mapping) {
-            for my $field (sort keys %$mapping) {
+            for my $field (keys %$mapping) {
                 $data->{$field} = $row->{$field};
             }
         }
     }
-    $sth->finish;
     $data;
 }
 
@@ -447,6 +447,61 @@ sub count {
     $sth->finish;
     $n;
 }
+
+# efficiently handle:
+# $bag->detect('foo' => 'bar')
+# $bag->detect('foo' => ['bar', 'baz'])
+around detect => sub {
+    my ($orig, $self, $arg1, $arg2) = @_;
+    my $mapping = $self->mapping;
+    if ($mapping && 
+            is_string($arg1) && 
+            $mapping->{$arg1} &&
+            (is_value($arg2) || is_array_ref($arg2))) {
+        my $name = $self->name;
+        my $spec = $mapping->{$arg1};
+        my $fields = join(',', sort keys %$mapping);
+        my $sql = "select data, $fields from $name where ";
+        my $dbh = $self->store->dbh;
+        my $sth;
+
+        if ($spec->{array}) {
+            $sql .= "$arg1 && ?";
+            $sth = $dbh->prepare_cached($sql)
+                or Catmandu::Error->throw($dbh->errstr);
+            $sth->execute(is_value($arg2) ? [$arg2] : $arg2)
+                or Catmandu::Error->throw($sth->errstr);
+        } elsif (is_value($arg2)) {
+            $sql .= "$arg1=?";
+            $sth = $dbh->prepare_cached($sql)
+                or Catmandu::Error->throw($dbh->errstr);
+            $sth->execute($arg2)
+                or Catmandu::Error->throw($sth->errstr);
+        } else {
+            $sql .= "$arg1 in(".join(',', ('?') x @$arg2).")";
+            $sth = $dbh->prepare_cached($sql)
+                or Catmandu::Error->throw($dbh->errstr);
+            $sth->execute(@$arg2)
+                or Catmandu::Error->throw($sth->errstr);
+        }
+
+        my $row = $sth->fetchrow_hashref;
+        $sth->finish;
+
+        if ($row) {
+            my $data = $self->deserialize($row->{data});
+            for my $field (keys %$mapping) {
+                $data->{$field} = $row->{$field};
+            }
+            return $data;
+        } else {
+            return;
+        }
+    }
+    $self->$orig($arg1, $arg2);
+};
+
+# TODO select
 
 # mysql:     select * from <bag> limit <offset>,<limit>
 # postgres:  select * from <bag> limit <limit> offset <offset>
