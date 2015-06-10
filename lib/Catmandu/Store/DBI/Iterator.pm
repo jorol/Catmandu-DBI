@@ -96,10 +96,11 @@ sub generator {
 
 sub count {
     my ($self) = @_;
+    my $binds = $self->binds;
     my $dbh = $self->bag->store->dbh;
     my $sth = $dbh->prepare_cached($self->_count_sql)
         or Catmandu::Error->throw($dbh->errstr);
-    $sth->execute
+    $sth->execute(@$binds)
         or Catmandu::Error->throw($sth->errstr);
     my ($n) = $sth->fetchrow_array;
     $sth->finish;
