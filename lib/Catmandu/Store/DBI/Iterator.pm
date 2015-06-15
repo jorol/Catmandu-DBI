@@ -40,11 +40,9 @@ sub _build_select_sql {
 
 sub _build_count_sql {
     my ($self) = @_;
-    my $bag = $self->bag;
-    my $name = $bag->name;
+    my $name = $self->bag->name;
     my $where = $self->where;
-    my $sql = "SELECT COUNT(*)";
-    $sql .= "FROM $name";
+    my $sql = "SELECT COUNT(*) FROM $name";
     if ($where) {
         $sql .= " WHERE $where";
     }
@@ -54,7 +52,6 @@ sub _build_count_sql {
 sub generator {
     my ($self) = @_;
     my $bag = $self->bag;
-    my $mapping = $bag->mapping;
     my $sql = $self->_select_sql;
     my $binds = $self->binds;
     my $total = $self->total;
@@ -72,23 +69,12 @@ sub generator {
                 or Catmandu::Error->throw($dbh->errstr);
             $sth->execute(@$binds, $start)
                 or Catmandu::Error->throw($sth->errstr);
-            $rows = $sth->fetchall_arrayref($mapping ? {} : ());
+            $rows = $sth->fetchall_arrayref({});
             $sth->finish;
             $start += $limit;
         }
 
-        my $row = shift(@$rows) // return;
-        my $data;
-        if ($mapping) {
-            $data = $bag->deserialize($row->{data});
-            for my $field (keys %$mapping) {
-                my $val = $row->{$field};
-                $data->{$field} = $val if defined $val;
-            }
-        } else {
-            $data = $bag->deserialize($row->[0]);
-        }
-
+        my $data = $bag->_row_to_data(shift(@$rows) // return);
         $total-- if defined $total;
         $data;
     };
@@ -122,8 +108,7 @@ around select => sub {
     my ($orig, $self, $arg1, $arg2) = @_;
     my $mapping = $self->bag->mapping;
 
-    if ($mapping && 
-            is_string($arg1) && 
+    if (is_string($arg1) && 
             $mapping->{$arg1} &&
             (is_value($arg2) || is_array_ref($arg2))) {
         my $opts = $self->_scope($arg1, $arg2);
@@ -137,8 +122,7 @@ around detect => sub {
     my ($orig, $self, $arg1, $arg2) = @_;
     my $mapping = $self->bag->mapping;
 
-    if ($mapping && 
-            is_string($arg1) && 
+    if (is_string($arg1) && 
             $mapping->{$arg1} &&
             (is_value($arg2) || is_array_ref($arg2))) {
         my $opts = $self->_scope($arg1, $arg2);
@@ -162,19 +146,20 @@ sub first {
 
 sub _scope {
     my ($self, $arg1, $arg2) = @_;
-    my $spec = $self->bag->mapping->{$arg1};
     my $binds = [@{$self->binds}];
     my $where = is_string($self->where) ? '('.$self->where.') AND ': '';
+    my $map = $self->bag->mapping->{$arg1};
+    my $column = $map->{column};
 
-    if ($spec->{array}) {
+    if ($map->{array}) {
         push @$binds, is_value($arg2) ? [$arg2] : $arg2;
-        $where .= "($arg1 && ?)";
+        $where .= "($column && ?)";
     } elsif (is_value($arg2)) {
         push @$binds, $arg2;
-        $where .= "($arg1=?)";
+        $where .= "($column=?)";
     } else {
         push @$binds, @$arg2;
-        $where .= "($arg1 IN(".join(',', ('?') x @$arg2).'))';
+        $where .= "($column IN(".join(',', ('?') x @$arg2).'))';
     }
 
     {

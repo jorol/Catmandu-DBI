@@ -1,6 +1,7 @@
 package Catmandu::Store::DBI;
 
 use Catmandu::Sane;
+use Catmandu::Util qw(require_package);
 use DBI;
 use Catmandu::Store::DBI::Bag;
 use Moo;
@@ -16,10 +17,26 @@ has data_source => (
     trigger  => sub { $_[0] =~ /^DBI:/i ? $_[0] : "DBI:$_[0]" },
 );
 
-has username => ( is => 'ro', default => sub { '' } );
-has password => ( is => 'ro', default => sub { '' } );
-has timeout => ( is => 'ro' );
+has username => (is => 'ro', default => sub { '' });
+has password => (is => 'ro', default => sub { '' });
+has timeout => (is => 'ro');
 has reconnect_after_timeout => (is => 'ro', default => sub { 0; });
+
+has handler => (is => 'lazy');
+
+sub _build_handler {
+    my ($self) = @_;
+    my $driver = $self->dbh->{Driver}{Name} // '';
+    my $pkg = 'Catmandu::Store::DBI::Handler';
+    if ($driver =~ /pg/i) {
+        $pkg .= '::Pg';
+    } elsif ($driver =~ /sqlite/i) {
+        $pkg .= '::SQLite';
+    } elsif ($driver =~ /mysql/i) {
+        $pkg .= '::MySQL';
+    }
+    require_package($pkg)->new;
+}
 
 sub dbh {
     my($self,$no_reconnect) = @_;
@@ -29,7 +46,7 @@ sub dbh {
     unless($instances->{$self}){
         $instances->{$self} = {
             start_time => time,
-            dbh => $self->_build_dbh()
+            dbh => $self->_build_dbh,
         };
     }
 
