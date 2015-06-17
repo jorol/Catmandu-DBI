@@ -6,24 +6,43 @@ use namespace::clean;
 
 with 'Catmandu::Store::DBI::Handler';
 
-sub column_type {
-    my ($self, $map) = @_; 
+sub _column_sql {
+    my ($self, $map) = @_;
+    my $col = $map->{column};
+    my $sql = "$col ";
     if ($map->{type} eq 'string') {
-        'TEXT';
+        $sql .= 'TEXT';
     } elsif ($map->{type} eq 'integer') {
-        'INTEGER';
+        $sql .= 'INTEGER';
     } elsif ($map->{type} eq 'binary') {
-        'BLOB';
+        $sql .= 'BLOB';
     }
+    if ($map->{unique}) {
+        $sql .= " UNIQUE";
+    }
+    if ($map->{required}) {
+        $sql .= " NOT NULL";
+    }
+    $sql;
 }
 
-sub create_index {
-    my ($self, $bag, $map) = @_;
+sub create_table {
+    my ($self, $bag) = @_;
+    my $mapping = $bag->mapping;
     my $name = $bag->name;
-    my $col = $map->{column};
     my $dbh = $bag->store->dbh;
-    my $sql = "CREATE INDEX IF NOT EXISTS ${name}_${col}_idx ON $name($col)";
-    $dbh->do($sql) or Catmandu::Error->throw($dbh->errstr);
+    
+    my $sql = "CREATE TABLE IF NOT EXISTS $name(".
+        join(',', map { $self->_column_sql($_) } values %$mapping).");";
+
+    for my $map (values %$mapping) {
+        next if $map->{unique} || !$map->{index};
+        my $col = $map->{column};
+        $sql .= "CREATE INDEX IF NOT EXISTS ${name}_${col}_idx ON $name($col);";
+    }
+
+    $dbh->do($sql)
+        or Catmandu::Error->throw($dbh->errstr);
 }
 
 sub add_row {

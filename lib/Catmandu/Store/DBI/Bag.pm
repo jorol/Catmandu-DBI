@@ -27,7 +27,6 @@ sub BUILD {
     my ($self) = @_;
     $self->_normalize_mapping;
     $self->store->handler->create_table($self);
-    $self->store->handler->create_indexes($self);
 }
 
 sub _normalize_mapping {

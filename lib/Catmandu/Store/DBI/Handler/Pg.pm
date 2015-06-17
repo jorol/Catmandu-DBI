@@ -7,40 +7,33 @@ use namespace::clean;
 
 with 'Catmandu::Store::DBI::Handler';
 
-sub column_type {
+sub _column_sql {
     my ($self, $map) = @_;
-    my $sql;
+    my $col = $map->{column};
+    my $sql = "$col ";
     if ($map->{type} eq 'string') {
-        $sql = 'TEXT';
+        $sql .= 'TEXT';
     } elsif ($map->{type} eq 'integer') {
-        $sql = 'INTEGER';
+        $sql .= 'INTEGER';
     } elsif ($map->{type} eq 'binary') {
-        $sql = 'BYTEA';
+        $sql .= 'BYTEA';
     }
     if ($map->{array}) {
         $sql .= '[]';
     }
+    if ($map->{unique}) {
+        $sql .= " UNIQUE";
+    }
+    if ($map->{required}) {
+        $sql .= " NOT NULL";
+    }
     $sql;
 }
 
-around create_table => sub {
-    my ($super, $self, $bag) = @_;
-    my $name = $bag->name;
-    # get rid of annoying warning
-    local $SIG{__WARN__} = sub {
-        my $msg = $_[0];
-        if ($msg !~ /^NOTICE:  relation "$name" already exists/) {
-            warn $msg;
-        }
-    };
-    $self->$super($bag);
-};
-
-sub create_index {
+sub _create_index_sql {
     my ($self, $bag, $map) = @_;
     my $name = $bag->name;
     my $col = $map->{column};
-    my $dbh = $bag->store->dbh;
     my $sql = <<SQL;
 DO \$\$
 BEGIN
@@ -58,8 +51,30 @@ END IF;
 
 END\$\$;
 SQL
+}
 
-    $dbh->do($sql) or Catmandu::Error->throw($dbh->errstr);
+sub create_table {
+    my ($self, $bag) = @_;
+    my $mapping = $bag->mapping;
+    my $name = $bag->name;
+    my $dbh = $bag->store->dbh;
+    
+    my $sql = "CREATE TABLE IF NOT EXISTS $name(".
+        join(',', map { $self->_column_sql($_) } values %$mapping).");";
+
+    for my $map (values %$mapping) {
+        next if $map->{unique} || !$map->{index};
+        $sql .= $self->_create_index_sql($bag, $map);
+    }
+
+    local $SIG{__WARN__} = sub {
+        my $msg = $_[0];
+        if ($msg !~ /^NOTICE:  relation "$name" already exists/) {
+            warn $msg;
+        }
+    };
+    $dbh->do($sql)
+        or Catmandu::Error->throw($dbh->errstr);
 }
 
 # see 
