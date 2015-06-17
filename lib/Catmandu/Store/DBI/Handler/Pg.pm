@@ -5,7 +5,15 @@ use DBD::Pg ();
 use Moo;
 use namespace::clean;
 
-extends 'Catmandu::Store::DBI::Handler';
+with 'Catmandu::Store::DBI::Handler';
+
+sub string_type {
+    'TEXT';
+}
+
+sub integer_type {
+    'INTEGER';
+}
 
 sub binary_type {
     'BYTEA';
@@ -19,6 +27,45 @@ around column_type => sub {
     }
     $sql;
 };
+
+around create_table => sub {
+    my ($super, $self, $bag) = @_;
+    my $name = $bag->name;
+    # get rid of annoying warning
+    local $SIG{__WARN__} = sub {
+        my $msg = $_[0];
+        if ($msg !~ /^NOTICE:  relation "$name" already exists/) {
+            warn $msg;
+        }
+    };
+    $self->$super($bag);
+};
+
+sub create_index {
+    my ($self, $bag, $map) = @_;
+    my $name = $bag->name;
+    my $col = $map->{column};
+    my $dbh = $bag->store->dbh;
+    my $sql = <<SQL;
+DO \$\$
+BEGIN
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM   pg_class c
+    JOIN   pg_namespace n ON n.oid = c.relnamespace
+    WHERE  c.relname = '${name}_${col}_idx'
+    AND    n.nspname = 'public'
+    ) THEN
+
+    CREATE INDEX ${name}_${col}_idx ON public.${name} (${col});
+END IF;
+
+END\$\$;
+SQL
+
+    $dbh->do($sql) or Catmandu::Error->throw($dbh->errstr);
+}
 
 # see 
 # http://stackoverflow.com/questions/15840922/where-not-exists-in-postgresql-gives-syntax-error
@@ -34,7 +81,7 @@ sub add_row {
     }
     my $id = $row->{$id_col};
     my @cols = keys %$row;
-    my @values = values %$row;
+    my @vals = values %$row;
     my $name = $bag->name;
     my $insert_sql = "INSERT INTO $name(".join(',', @cols).") SELECT ".
         join(',', ('?') x @cols).

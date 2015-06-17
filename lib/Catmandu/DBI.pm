@@ -1,4 +1,5 @@
 package Catmandu::DBI;
+
 our $VERSION = "0.0135";
 
 =head1 NAME
@@ -17,9 +18,9 @@ Nicolas Franck C<< <nicolas.franck at ugent.be> >>
 
 Patrick Hochstenbach C<< <patrick.hochstenbach at ugent.be> >>
 
-Nicolas Steenlant C<< <nicolas.steenlant at ugent.be> >>
-
 Vitali Peil C<< <vitali.peil at uni-bielefeld.de> >>
+
+Nicolas Steenlant C<< <nicolas.steenlant at ugent.be> >>
 
 =head1 SEE ALSO
 

@@ -41,11 +41,25 @@ sub _build_select_sql {
 sub _build_count_sql {
     my ($self) = @_;
     my $name = $self->bag->name;
+    my $total = $self->total;
+    my $start = $self->start;
     my $where = $self->where;
-    my $sql = "SELECT COUNT(*) FROM $name";
+
+    return "SELECT COUNT(*) FROM $name"
+        unless $total || $start || $where;
+
+    my $sql = "SELECT COUNT(*) FROM (SELECT * FROM $name";
     if ($where) {
         $sql .= " WHERE $where";
     }
+    if ($total) {
+        $sql .= " LIMIT $total";
+    }
+    if ($start) {
+        $sql .= " OFFSET $start";
+    }
+    $sql .= ")";
+
     $sql;
 }
 

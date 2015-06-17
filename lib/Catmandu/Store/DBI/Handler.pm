@@ -1,20 +1,14 @@
 package Catmandu::Store::DBI::Handler;
 
 use Catmandu::Sane;
-use Moo;
+use Moo::Role;
 use namespace::clean;
 
-sub string_type {
-    'TEXT';
-}
-
-sub integer_type {
-    'INTEGER';
-}
-
-sub binary_type {
-    'BLOB';
-}
+requires 'string_type';
+requires 'integer_type';
+requires 'binary_type';
+requires 'create_index';
+requires 'add_row';
 
 sub column_type {
     my ($self, $map) = @_; 
@@ -53,36 +47,10 @@ sub create_table {
 sub create_indexes {
     my ($self, $bag) = @_;
     my $mapping = $bag->mapping;
-    my $name = $bag->name;
-    my $dbh = $bag->store->dbh;
-    die "TODO";
-}
-
-sub add_row {
-    my ($self, $bag, $row) = @_;
-    my $id_col = $bag->mapping->{_id}{column};
-    my $id = $row->{$id_col};
-    my @cols = keys %$row;
-    my @values = values %$row;
-    my $name = $bag->name;
-    my $insert_sql = "INSERT INTO $name(".join(',', @cols).") VALUES(".
-        join(',', ('?') x @cols).")".
-        " WHERE NOT EXISTS (SELECT 1 FROM $name WHERE $id_col=?)";
-    my $update_sql = "UPDATE $name SET ".join(',', map { "$_=?" } @cols).
-        " WHERE $id_col=?";
-
-    my $dbh = $bag->store->dbh;
-    my $sth = $dbh->prepare_cached($update_sql)
-        or Catmandu::Error->throw($dbh->errstr);
-    $sth->execute(@values, $id) or Catmandu::Error->throw($sth->errstr);
-    unless ($sth->rows) {
-        $sth->finish;
-        $sth = $dbh->prepare_cached($insert_sql)
-            or Catmandu::Error->throw($dbh->errstr);
-        $sth->execute(@values, $id)
-            or Catmandu::Error->throw($sth->errstr);
+    for my $map (values %$mapping) {
+        next if !$map->{index} || $map->{unique};
+        $self->create_index($bag, $map);
     }
-    $sth->finish;
 }
 
 1;

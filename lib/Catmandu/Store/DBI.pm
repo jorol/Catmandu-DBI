@@ -12,87 +12,92 @@ our $VERSION = "0.0425";
 with 'Catmandu::Store';
 
 has data_source => (
-    is       => 'ro',
+    is => 'ro',
     required => 1,
-    trigger  => sub { $_[0] =~ /^DBI:/i ? $_[0] : "DBI:$_[0]" },
+    trigger => sub { $_[0] =~ /^DBI:/i ? $_[0] : "DBI:$_[0]" },
 );
-
 has username => (is => 'ro', default => sub { '' });
 has password => (is => 'ro', default => sub { '' });
-has timeout => (is => 'ro');
-has reconnect_after_timeout => (is => 'ro', default => sub { 0; });
-
+has timeout => (is => 'ro', predicate => 1);
+has reconnect_after_timeout => (is => 'ro');
 has handler => (is => 'lazy');
+has _in_transaction => (
+    is => 'rw',
+    writer => '_set_in_transaction',
+);
+has _connect_time => (is => 'rw', writer => '_set_connect_time');
+has _dbh => (
+    is => 'lazy',
+    builder => '_build_dbh',
+    writer => '_set_dbh',
+    predicate => 'has_dbh',
+);
+
+sub handler_namespace {
+   'Catmandu::Store::DBI::Handler'; 
+}
 
 sub _build_handler {
     my ($self) = @_;
     my $driver = $self->dbh->{Driver}{Name} // '';
-    my $pkg = 'Catmandu::Store::DBI::Handler';
+    my $ns = $self->handler_namespace;
+    my $pkg;
     if ($driver =~ /pg/i) {
-        $pkg .= '::Pg';
+        $pkg = 'Pg';
     } elsif ($driver =~ /sqlite/i) {
-        $pkg .= '::SQLite';
+        $pkg = 'SQLite';
     } elsif ($driver =~ /mysql/i) {
-        $pkg .= '::MySQL';
+        $pkg = 'MySQL';
+    } else {
+        Catmandu::NotImplemented->throw(
+            'Only Pg, SQLite and MySQL are supported.');
     }
-    require_package($pkg)->new;
-}
-
-sub dbh {
-    my($self,$no_reconnect) = @_;
-
-    state $instances = {};
-
-    unless($instances->{$self}){
-        $instances->{$self} = {
-            start_time => time,
-            dbh => $self->_build_dbh,
-        };
-    }
-
-    my $dbh = $instances->{$self}->{dbh};
-
-    #do NOT access driver attributes during global destruction!
-    return $dbh if $no_reconnect;
-
-    my $driver = $dbh->{Driver}{Name} // "";
-    my $start_time = $instances->{$self}->{start_time};
-
-    #mysql has built-in option 'mysql_auto_reconnect'
-    if ($driver !~ /mysql/i && defined($self->timeout)) {
-
-        if((time - $start_time) > $self->timeout ) {
-
-            #timeout $timeout reached => reconnecting?
-            if($self->reconnect_after_timeout || !($dbh->ping)){
-                #ping failed, so trying to reconnect";
-                $dbh->disconnect;
-                $dbh = $self->_build_dbh();
-                $instances->{$self}->{dbh} = $dbh;
-            }
-            $instances->{$self}->{start_time} = time;
-
-        }
-
-    }
-
-    $dbh;
+    require_package($pkg, $ns)->new;
 }
 
 sub _build_dbh {
-    my $self = $_[0];
+    my ($self) = @_;
     my $opts = {
         AutoCommit => 1,
         RaiseError => 1,
         mysql_auto_reconnect => 1,
     };
-    DBI->connect($self->data_source, $self->username, $self->password, $opts);
+    my $dbh = DBI->connect(
+        $self->data_source,
+        $self->username,
+        $self->password,
+        $opts,
+    );
+    $self->_set_connect_time(time);
+    $dbh;
+}
+
+sub dbh {
+    my ($self) = @_;
+    my $dbh = $self->_dbh;
+    my $connect_time = $self->_connect_time;
+    my $driver = $dbh->{Driver}{Name} // '';
+
+    # MySQL has builtin option mysql_auto_reconnect
+    if ($driver !~ /mysql/i && $self->has_timeout &&
+            time - $connect_time > $self->timeout) {
+        if ($self->reconnect_after_timeout || !$dbh->ping) {
+            # ping failed, so try to reconnect
+            $dbh->disconnect;
+            $dbh = $self->_build_dbh;
+            $self->_set_dbh($dbh);
+        } else {
+            $self->_set_connect_time(time);
+        }
+    }
+
+    $dbh;
 }
 
 sub transaction {
     my ($self, $sub) = @_;
 
-    if ($self->{_tx}) {
+    if ($self->_in_transaction) {
         return $sub->();
     }
 
@@ -100,16 +105,16 @@ sub transaction {
     my @res;
 
     eval {
-        $self->{_tx} = 1;
+        $self->_set_in_transaction(1);
         $dbh->begin_work;
         @res = $sub->();
         $dbh->commit;
-        $self->{_tx} = 0;
+        $self->_set_in_transaction(0);
         1;
     } or do {
         my $err = $@;
         eval { $dbh->rollback };
-        $self->{_tx} = 0;
+        $self->_set_in_transaction(0);
         die $err;
     };
 
@@ -118,8 +123,7 @@ sub transaction {
 
 sub DEMOLISH {
     my ($self) = @_;
-    my $dbh = $self->dbh(1);
-    $dbh->disconnect if $dbh;
+    $self->_dbh->disconnect if $self->has_dbh;
 }
 
 1;
