@@ -7,26 +7,21 @@ use namespace::clean;
 
 with 'Catmandu::Store::DBI::Handler';
 
-sub string_type {
-    'TEXT';
-}
-
-sub integer_type {
-    'INTEGER';
-}
-
-sub binary_type {
-    'BYTEA';
-}
-
-around column_type => sub {
-    my ($super, $self, $map) = @_;
-    my $sql = $self->$super($map);
+sub column_type {
+    my ($self, $map) = @_;
+    my $sql;
+    if ($map->{type} eq 'string') {
+        $sql = 'TEXT';
+    } elsif ($map->{type} eq 'integer') {
+        $sql = 'INTEGER';
+    } elsif ($map->{type} eq 'binary') {
+        $sql = 'BYTEA';
+    }
     if ($map->{array}) {
         $sql .= '[]';
     }
     $sql;
-};
+}
 
 around create_table => sub {
     my ($super, $self, $bag) = @_;

@@ -13,8 +13,6 @@ has binds => (is => 'lazy');
 has total => (is => 'ro');
 has start => (is => 'lazy');
 has limit => (is => 'lazy');
-has _select_sql => (is => 'ro', lazy => 1, builder => '_build_select_sql');
-has _count_sql => (is => 'ro', lazy => 1, builder => '_build_count_sql');
 
 sub _build_binds { [] }
 sub _build_start { 0 }
@@ -28,17 +26,17 @@ sub _build_limit {
     $limit;
 }
 
-sub _build_select_sql {
-    my ($self) = @_;
+sub _select_sql {
+    my ($self, $start) = @_;
     my $where = $self->where;
     my $limit = $self->limit;
     my $sql = "SELECT * FROM ".$self->bag->name;
     $sql .= " WHERE $where" if $where;
-    $sql .= " ORDER BY id LIMIT $limit OFFSET ?";
+    $sql .= " ORDER BY id LIMIT $limit OFFSET $start";
     $sql;
 }
 
-sub _build_count_sql {
+sub _count_sql {
     my ($self) = @_;
     my $name = $self->bag->name;
     my $total = $self->total;
@@ -66,7 +64,6 @@ sub _build_count_sql {
 sub generator {
     my ($self) = @_;
     my $bag = $self->bag;
-    my $sql = $self->_select_sql;
     my $binds = $self->binds;
     my $total = $self->total;
     my $start = $self->start;
@@ -79,9 +76,9 @@ sub generator {
 
         unless (defined $rows && @$rows) {
             my $dbh = $bag->store->dbh;
-            my $sth = $dbh->prepare_cached($sql)
+            my $sth = $dbh->prepare_cached($self->_select_sql($start))
                 or Catmandu::Error->throw($dbh->errstr);
-            $sth->execute(@$binds, $start)
+            $sth->execute(@$binds)
                 or Catmandu::Error->throw($sth->errstr);
             $rows = $sth->fetchall_arrayref({});
             $sth->finish;

@@ -4,22 +4,9 @@ use Catmandu::Sane;
 use Moo::Role;
 use namespace::clean;
 
-requires 'string_type';
-requires 'integer_type';
-requires 'binary_type';
+requires 'column_type';
 requires 'create_index';
 requires 'add_row';
-
-sub column_type {
-    my ($self, $map) = @_; 
-    if ($map->{type} eq 'string') {
-        $self->string_type;
-    } elsif ($map->{type} eq 'integer') {
-        $self->integer_type;
-    } elsif ($map->{type} eq 'binary') {
-        $self->binary_type;
-    }
-}
 
 sub column_sql {
     my ($self, $map) = @_; 

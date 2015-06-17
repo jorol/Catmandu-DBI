@@ -30,7 +30,6 @@ has _dbh => (
     is => 'lazy',
     builder => '_build_dbh',
     writer => '_set_dbh',
-    predicate => 'has_dbh',
 );
 
 sub handler_namespace {
@@ -123,7 +122,7 @@ sub transaction {
 
 sub DEMOLISH {
     my ($self) = @_;
-    $self->_dbh->disconnect if $self->has_dbh;
+    $self->{_dbh}->disconnect if $self->{_dbh};
 }
 
 1;

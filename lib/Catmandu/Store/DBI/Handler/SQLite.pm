@@ -6,16 +6,15 @@ use namespace::clean;
 
 with 'Catmandu::Store::DBI::Handler';
 
-sub string_type {
-    'TEXT';
-}
-
-sub integer_type {
-    'INTEGER';
-}
-
-sub binary_type {
-    'BLOB';
+sub column_type {
+    my ($self, $map) = @_; 
+    if ($map->{type} eq 'string') {
+        'TEXT';
+    } elsif ($map->{type} eq 'integer') {
+        'INTEGER';
+    } elsif ($map->{type} eq 'binary') {
+        'BLOB';
+    }
 }
 
 sub create_index {
