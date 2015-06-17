@@ -33,16 +33,18 @@ sub create_table {
     my $dbh = $bag->store->dbh;
     
     my $sql = "CREATE TABLE IF NOT EXISTS $name(".
-        join(',', map { $self->_column_sql($_) } values %$mapping).");";
+        join(',', map { $self->_column_sql($_) } values %$mapping).")";
+
+    $dbh->do($sql)
+        or Catmandu::Error->throw($dbh->errstr);
 
     for my $map (values %$mapping) {
         next if $map->{unique} || !$map->{index};
         my $col = $map->{column};
-        $sql .= "CREATE INDEX IF NOT EXISTS ${name}_${col}_idx ON $name($col);";
+        my $idx_sql = "CREATE INDEX IF NOT EXISTS ${name}_${col}_idx ON $name($col)";
+        $dbh->do($idx_sql)
+            or Catmandu::Error->throw($dbh->errstr);
     }
-
-    $dbh->do($sql)
-        or Catmandu::Error->throw($dbh->errstr);
 }
 
 sub add_row {
