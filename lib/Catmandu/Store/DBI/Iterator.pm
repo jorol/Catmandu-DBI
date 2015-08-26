@@ -56,7 +56,7 @@ sub _count_sql {
     if ($start) {
         $sql .= " OFFSET $start";
     }
-    $sql .= ")";
+    $sql .= ") AS q";
 
     $sql;
 }
