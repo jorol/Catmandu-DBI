@@ -33,7 +33,7 @@ has _dbh => (
 );
 
 sub handler_namespace {
-   'Catmandu::Store::DBI::Handler'; 
+   'Catmandu::Store::DBI::Handler';
 }
 
 sub _build_handler {

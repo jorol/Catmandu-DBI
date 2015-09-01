@@ -8,9 +8,10 @@ use namespace::clean;
 with 'Catmandu::Store::DBI::Handler';
 
 sub _column_sql {
-    my ($self, $map) = @_;
+    my ($self, $map,$bag) = @_;
     my $col = $map->{column};
-    my $sql = "$col ";
+    my $dbh = $bag->store->dbh;
+    my $sql = $dbh->quote_identifier($col)." ";
     if ($map->{type} eq 'string') {
         $sql .= 'TEXT';
     } elsif ($map->{type} eq 'integer') {
@@ -46,7 +47,7 @@ IF NOT EXISTS (
     AND    n.nspname = 'public'
     ) THEN
 
-    CREATE INDEX ${name}_${col}_idx ON public.${name} (${col});
+    CREATE INDEX ${name}_${col}_idx ON public.${name} ('${col}');
 END IF;
 
 END\$\$;
@@ -58,9 +59,10 @@ sub create_table {
     my $mapping = $bag->mapping;
     my $name = $bag->name;
     my $dbh = $bag->store->dbh;
-    
-    my $sql = "CREATE TABLE IF NOT EXISTS $name(".
-        join(',', map { $self->_column_sql($_) } values %$mapping).");";
+    my $q_name = $dbh->quote_identifier($name);
+
+    my $sql = "CREATE TABLE IF NOT EXISTS $q_name(".
+        join(',', map { $self->_column_sql($_,$bag) } values %$mapping).");";
 
     for my $map (values %$mapping) {
         next if $map->{unique} || !$map->{index};
@@ -77,29 +79,32 @@ sub create_table {
         or Catmandu::Error->throw($dbh->errstr);
 }
 
-# see 
+# see
 # http://stackoverflow.com/questions/15840922/where-not-exists-in-postgresql-gives-syntax-error
 # and
 # https://rt.cpan.org/Public/Bug/Display.html?id=13180
 sub add_row {
     my ($self, $bag, $row) = @_;
     my $mapping = $bag->mapping;
+    my $dbh = $bag->store->dbh;
     my $id_col = $mapping->{_id}{column};
+    my $q_id_col = $dbh->quote_identifier($id_col);
     my %binary_cols;
     for my $map (values %$mapping) {
         $binary_cols{$map->{column}} = 1 if $map->{type} eq 'binary';
     }
     my $id = $row->{$id_col};
     my @cols = keys %$row;
+    my @q_cols = map { $dbh->quote_identifier($_) } @cols;
     my @vals = values %$row;
     my $name = $bag->name;
-    my $insert_sql = "INSERT INTO $name(".join(',', @cols).") SELECT ".
+    my $q_name = $dbh->quote_identifier($name);
+    my $insert_sql = "INSERT INTO $q_name(".join(',', @q_cols).") SELECT ".
         join(',', ('?') x @cols).
-        " WHERE NOT EXISTS (SELECT 1 FROM $name WHERE $id_col=?)";
-    my $update_sql = "UPDATE $name SET ".join(',', map { "$_=?" } @cols).
-        " WHERE $id_col=?";
+        " WHERE NOT EXISTS (SELECT 1 FROM $q_name WHERE $q_id_col=?)";
+    my $update_sql = "UPDATE $q_name SET ".join(',', map { "$_=?" } @q_cols).
+        " WHERE $q_id_col=?";
 
-    my $dbh = $bag->store->dbh;
     my $sth = $dbh->prepare_cached($update_sql)
         or Catmandu::Error->throw($dbh->errstr);
     my $i = 0;

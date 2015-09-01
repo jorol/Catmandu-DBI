@@ -25,14 +25,30 @@ sub _build_limit {
     }
     $limit;
 }
+sub _q_id {
+    $_[0]->bag->store->dbh->quote_identifier($_[1]);
+}
+#syntax LIMIT <limit> OFFSET <offset> does not allow to supply OFFSET only
+#so we're setting the limit to a reasonable high value
+#http://stackoverflow.com/questions/10491492/sqllite-with-skip-offset-only-not-limit
+#http://stackoverflow.com/questions/255517/mysql-offset-infinite-rows
+sub _max_limit {
+    #avoid scientific notation in stringification of a big integer
+    use bigint;
+    #maximum signed bigint
+    state $max_limit = 2**63 - 1;
+}
 
 sub _select_sql {
     my ($self, $start) = @_;
+    my $bag = $self->bag;
+    my $id_field = $bag->mapping->{_id}->{column};
+    my $q_id_field = $self->_q_id($id_field);
     my $where = $self->where;
-    my $limit = $self->limit;
-    my $sql = "SELECT * FROM ".$self->bag->name;
+    my $limit = is_value($self->limit) ? $self->limit : _max_limit();
+    my $sql = "SELECT * FROM ".$self->_q_id($self->bag->name);
     $sql .= " WHERE $where" if $where;
-    $sql .= " ORDER BY id LIMIT $limit OFFSET $start";
+    $sql .= " ORDER BY $q_id_field LIMIT $limit OFFSET $start";
     $sql;
 }
 
@@ -43,15 +59,18 @@ sub _count_sql {
     my $start = $self->start;
     my $where = $self->where;
 
-    return "SELECT COUNT(*) FROM $name"
+    return "SELECT COUNT(*) FROM ".$self->_q_id($name)
         unless $total || $start || $where;
 
-    my $sql = "SELECT COUNT(*) FROM (SELECT * FROM $name";
+    my $sql = "SELECT COUNT(*) FROM (SELECT * FROM ".$self->_q_id($name);
     if ($where) {
         $sql .= " WHERE $where";
     }
     if ($total) {
         $sql .= " LIMIT $total";
+    }
+    else{
+        $sql .= " LIMIT "._max_limit();
     }
     if ($start) {
         $sql .= " OFFSET $start";
@@ -119,7 +138,7 @@ around select => sub {
     my ($orig, $self, $arg1, $arg2) = @_;
     my $mapping = $self->bag->mapping;
 
-    if (is_string($arg1) && 
+    if (is_string($arg1) &&
             $mapping->{$arg1} &&
             (is_value($arg2) || is_array_ref($arg2))) {
         my $opts = $self->_scope($arg1, $arg2);
@@ -133,7 +152,7 @@ around detect => sub {
     my ($orig, $self, $arg1, $arg2) = @_;
     my $mapping = $self->bag->mapping;
 
-    if (is_string($arg1) && 
+    if (is_string($arg1) &&
             $mapping->{$arg1} &&
             (is_value($arg2) || is_array_ref($arg2))) {
         my $opts = $self->_scope($arg1, $arg2);
@@ -161,16 +180,17 @@ sub _scope {
     my $where = is_string($self->where) ? '('.$self->where.') AND ': '';
     my $map = $self->bag->mapping->{$arg1};
     my $column = $map->{column};
+    my $q_column = $self->_q_id($column);
 
     if ($map->{array}) {
         push @$binds, is_value($arg2) ? [$arg2] : $arg2;
-        $where .= "($column && ?)";
+        $where .= "($q_column && ?)";
     } elsif (is_value($arg2)) {
         push @$binds, $arg2;
-        $where .= "($column=?)";
+        $where .= "($q_column=?)";
     } else {
         push @$binds, @$arg2;
-        $where .= "($column IN(".join(',', ('?') x @$arg2).'))';
+        $where .= "($q_column IN(".join(',', ('?') x @$arg2).'))';
     }
 
     {

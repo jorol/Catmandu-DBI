@@ -5,7 +5,22 @@ use Moo;
 use Catmandu::Store::DBI::Iterator;
 use namespace::clean;
 
-has mapping => (is => 'ro', default => sub { +{} });
+my $default_mapping = {
+    _id => {
+        column => 'id',
+        type => 'string',
+        index => 1,
+        required => 1,
+        unique => 1
+    },
+    _data => {
+        column => 'data',
+        type => 'binary',
+        serialize => 'all'
+    }
+};
+
+has mapping => (is => 'ro', default => sub { $default_mapping });
 has _iterator => (
     is => 'ro',
     lazy => 1,
@@ -16,7 +31,7 @@ has _iterator => (
         slice
         select
         detect
-        first      
+        first
     )]
 );
 
@@ -33,19 +48,7 @@ sub _normalize_mapping {
     my ($self) = @_;
     my $mapping = $self->mapping;
 
-    $mapping->{_id} ||= {
-        column => 'id',
-        type => 'string',
-        index => 1,
-        required => 1,
-        unique => 1,
-    };
-
-    $mapping->{_data} ||= {
-        column => 'data',
-        type => 'binary',
-        serialize => 'all',
-    };
+    $mapping->{_id} ||= $default_mapping->{_id};
 
     for my $key (keys %$mapping) {
         my $map = $mapping->{$key};
@@ -63,9 +66,11 @@ sub _build_iterator {
 
 sub get {
     my ($self, $id) = @_;
-    my $name = $self->name;
-    my $dbh = $self->store->dbh;
-    my $sth = $dbh->prepare_cached("SELECT * FROM $name WHERE id=?")
+    my $store = $self->store;
+    my $dbh = $store->dbh;
+    my $q_name = $dbh->quote_identifier($self->name);
+    my $q_id_field = $dbh->quote_identifier( $self->mapping->{_id}->{column} );
+    my $sth = $dbh->prepare_cached("SELECT * FROM ${q_name} WHERE ${q_id_field}=?")
         or Catmandu::Error->throw($dbh->errstr);
     $sth->execute($id) or Catmandu::Error->throw($sth->errstr);
     my $row = $sth->fetchrow_hashref;
@@ -81,9 +86,11 @@ sub add {
 
 sub delete {
     my ($self, $id) = @_;
-    my $name = $self->name;
-    my $dbh = $self->store->dbh;
-    my $sth = $dbh->prepare_cached("DELETE FROM $name WHERE id=?")
+    my $store = $self->store;
+    my $dbh = $store->dbh;
+    my $q_name = $dbh->quote_identifier($self->name);
+    my $q_id_field = $dbh->quote_identifier( $self->mapping->{_id}->{column} );
+    my $sth = $dbh->prepare_cached("DELETE FROM ${q_name} WHERE ${q_id_field}=?")
       or Catmandu::Error->throw($dbh->errstr);
     $sth->execute($id) or Catmandu::Error->throw($sth->errstr);
     $sth->finish;
@@ -91,9 +98,10 @@ sub delete {
 
 sub delete_all {
     my ($self) = @_;
-    my $name = $self->name;
-    my $dbh = $self->store->dbh;
-    my $sth = $dbh->prepare_cached("DELETE FROM $name")
+    my $store = $self->store;
+    my $dbh = $store->dbh;
+    my $q_name = $dbh->quote_identifier($self->name);
+    my $sth = $dbh->prepare_cached("DELETE FROM ${q_name}")
         or Catmandu::Error->throw($dbh->errstr);
     $sth->execute or Catmandu::Error->throw($sth->errstr);
     $sth->finish;
