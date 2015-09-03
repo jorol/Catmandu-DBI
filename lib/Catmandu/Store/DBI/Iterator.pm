@@ -25,17 +25,13 @@ sub _build_limit {
     }
     $limit;
 }
+
 sub _q_id {
     $_[0]->bag->store->dbh->quote_identifier($_[1]);
 }
-#syntax LIMIT <limit> OFFSET <offset> does not allow to supply OFFSET only
-#so we're setting the limit to a reasonable high value
-#http://stackoverflow.com/questions/10491492/sqllite-with-skip-offset-only-not-limit
-#http://stackoverflow.com/questions/255517/mysql-offset-infinite-rows
-sub _max_limit {
-    #avoid scientific notation in stringification of a big integer
+
+sub _max_limit { # should be plenty large
     use bigint;
-    #maximum signed bigint
     state $max_limit = 2**63 - 1;
 }
 
@@ -45,7 +41,7 @@ sub _select_sql {
     my $id_field = $bag->mapping->{_id}->{column};
     my $q_id_field = $self->_q_id($id_field);
     my $where = $self->where;
-    my $limit = is_value($self->limit) ? $self->limit : _max_limit();
+    my $limit = $self->limit;
     my $sql = "SELECT * FROM ".$self->_q_id($self->bag->name);
     $sql .= " WHERE $where" if $where;
     $sql .= " ORDER BY $q_id_field LIMIT $limit OFFSET $start";
@@ -69,8 +65,8 @@ sub _count_sql {
     if ($total) {
         $sql .= " LIMIT $total";
     }
-    else{
-        $sql .= " LIMIT "._max_limit();
+    elsif ($start) { # no offset without limit
+        $sql .= " LIMIT "._max_limit;
     }
     if ($start) {
         $sql .= " OFFSET $start";
