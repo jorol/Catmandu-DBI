@@ -84,6 +84,8 @@ Catmandu::Importer::DBI - Catmandu module to import data from any DBI source
 =head1 AUTHORS
 
  Patrick Hochstenbach, C<< <patrick.hochstenbach at ugent.be> >>
+ Nicolas Franck, C<< <nicolas.franck at ugent.be> >>
+ Nicolas Steenlant, C<< <nicolas.steenlant at ugent.be> >>
 
 =head1 SEE ALSO
 
