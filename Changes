@@ -1,6 +1,8 @@
 Revision history for Catmandu-DBI
 
 {{$NEXT}}
+
+0.05  2015-10-08 11:12:04 CEST
   - Column mapping
   - Specialized Iterator
   - Synchronize VERSION's
