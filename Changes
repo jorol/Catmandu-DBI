@@ -1,36 +1,51 @@
+Revision history for Catmandu-DBI
+
+{{$NEXT}}
+  - Column mapping
+  - Specialized Iterator
+
 0.0135 2015-04-14
-  - BUG in Catmandu::Store::DBI for MySQL. identifier 'id' is of type 'varchar', which is case insensitive.
-    This can easily be solved with the sql statement "alter table scans modify id varchar(255) binary".
+  - BUG in Catmandu::Store::DBI for MySQL. identifier 'id' is of type
+    'varchar', which is case insensitive.  This can easily be solved with the
+    sql statement "alter table scans modify id varchar(255) binary".
 
 0.0134 2015-01-26
-  - BUG in Catmandu::Store::DBI: method 'dbh' crashes during global destruction (after call to DEMOLISH). Fixed by not accessing
-    DBI interface during this fase.
+  - BUG in Catmandu::Store::DBI: method 'dbh' crashes during global destruction
+    (after call to DEMOLISH). Fixed by not accessing DBI interface during this fase.
+
 0.0133 2015-01-16
-  - BUG in Catmandu::Store::DBI::Bag: a reference to the database handle is stored in a variable outside
-    the callback in function _build_create_*, and then used inside the callback. This only works as long as the
-    database handle is active. When working with web applications, where these stores are kept in memory,
-    and not used for a long time, this can lead to inactive database handles. Fix: direct reference from the callback
-    to the function "dbh" of the Catmandu::Store::DBI, that automatically reconnects if necessary.
+  - BUG in Catmandu::Store::DBI::Bag: a reference to the database handle is
+    stored in a variable outside the callback in function _build_create_*, and
+    then used inside the callback. This only works as long as the database handle
+    is active. When working with web applications, where these stores are kept in
+    memory, and not used for a long time, this can lead to inactive database
+    handles. Fix: direct reference from the callback to the function "dbh" of the
+    Catmandu::Store::DBI, that automatically reconnects if necessary.
+
 0.0132 2015-01-09
-  - BUG for DBD::Pg. When inserting data, column 'data' is not properly escaped als PG_BYTEA (see _build_add_postgres
-    in Catmandu::Store::DBI::Bag)
+  - BUG for DBD::Pg. When inserting data, column 'data' is not properly escaped
+    als PG_BYTEA (see _build_add_postgres in Catmandu::Store::DBI::Bag)
+
 0.0131 2015-01-09
-  - Incorrect use of 'state' in function Catmandu::Store::DBI::dbh. Due to this bug, only one dbh
-    could be stored. Now also the version in Catmandu::Store::DBI is raised
+  - Incorrect use of 'state' in function Catmandu::Store::DBI::dbh. Due to this
+    bug, only one dbh could be stored. Now also the version in
+    Catmandu::Store::DBI is raised
 
 0.013 2015-01-08
-  - Incorrect use of 'state' in function Catmandu::Store::DBI::dbh. Due to this bug, only one dbh
-    could be stored.
+  - Incorrect use of 'state' in function Catmandu::Store::DBI::dbh. Due to this
+    bug, only one dbh could be stored.
 
 0.012 2014-10-02
-  - Use of function tempfile in test scripts must set the option EXLOCK to '0', to avoid locking problems on BSD.
-    This temporary file is used by SQLite, but EXLOCK is set to '1' on some systems.
+  - Use of function tempfile in test scripts must set the option EXLOCK to '0',
+    to avoid locking problems on BSD.  This temporary file is used by SQLite,
+    but EXLOCK is set to '1' on some systems.
 
 0.011 2014-10-01
   - Switched to Dist::Milla
 
 0.01 2014-09-26
-  - Catmandu-Store-DBI and Catmandu-Importer-DBI merged into one package Catmandu-DBI
+  - Catmandu-Store-DBI and Catmandu-Importer-DBI merged into one package
+    Catmandu-DBI
 
 Revision history for Catmandu-Importer-DBI
 

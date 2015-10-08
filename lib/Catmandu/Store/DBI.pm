@@ -140,7 +140,7 @@ Version 0.0424
     use Catmandu::Store::DBI;
 
     my $store = Catmandu::Store::DBI->new(
-        data_source => 'DBI:mysql:database=test', # prefix "DBI:" optionl
+        data_source => 'DBI:mysql:database=test', # prefix "DBI:" optional
         username => '', # optional
         password => '', # optional
     );
@@ -172,6 +172,60 @@ A Catmandu::Store::DBI is a Perl package that can store data into
 DBI backed databases. The database as a whole is called a 'store'
 (L<Catmandu::Store>. Databases also have compartments (e.g. tables)
 called 'bags' (L<Catmandu::Bag>).
+
+=head1 COLUMN MAPPING
+
+The default behavior is to map the C<_id> of the record to the C<id> column and serialize all other data in the C<data> column. This behavior can be changed with mapping option:
+
+    my $store = Catmandu::Store::DBI->new(
+        data_source => 'DBI:mysql:database=test',
+        bags => {
+            # books table
+            books => {
+                mapping => {
+                    # these keys will be directly mapped to columns
+                    # all other keys will be serialized in the data column
+                    title => {type => 'string', required => 1, column => 'book_title'},
+                    isbn => {type => 'string', unique => 1},
+                    authors => {type => 'string', array => 1}
+                }
+            }
+        }
+    );
+
+=head2 Column types
+
+=over
+
+=item string
+
+=item integer
+
+=item binary
+
+=back
+
+=head2 Column options
+
+=over
+
+=item column
+
+Name of the table column if it differs from the key in your data.
+
+=item array
+
+Boolean option, default is C<0>. Note that this options is only supported for PostgreSQL.
+
+=item unique
+
+Boolean option, default is C<0>.
+
+=item required
+
+Boolean option, default is C<0>.
+
+=back
 
 =head1 METHODS
 
@@ -223,18 +277,6 @@ This has the following reasons:
 =head2 bag($name)
 
 Create or retieve a bag with name $name. Returns a Catmandu::Bag.
-
-=head1 AUTHOR
-
-Nicolas Steenlant, C<< <nicolas.steenlant at ugent.be> >>
-
-=head1 CONTRIBUTOR
-
-Vitali Peil C<< <vitali.peil at uni-bielefeld.de> >>
-
-=head1 CONTRIBUTOR
-
-Nicolas Franck C<< <nicolas.franck at ugent.be> >>
 
 =head1 SEE ALSO
 

@@ -81,12 +81,6 @@ Catmandu::Importer::DBI - Catmandu module to import data from any DBI source
 
  $ catmandu convert DBI --dsn dbi:mysql:foobar --user foo --password bar --query "select * from table"
 
-=head1 AUTHORS
-
- Patrick Hochstenbach, C<< <patrick.hochstenbach at ugent.be> >>
- Nicolas Franck, C<< <nicolas.franck at ugent.be> >>
- Nicolas Steenlant, C<< <nicolas.steenlant at ugent.be> >>
-
 =head1 SEE ALSO
 
 L<Catmandu>, L<Catmandu::Importer> , L<Catmandu::Store::DBI>
