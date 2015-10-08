@@ -3,6 +3,7 @@ Revision history for Catmandu-DBI
 {{$NEXT}}
   - Column mapping
   - Specialized Iterator
+  - Synchronize VERSION's
 
 0.0135 2015-04-14
   - BUG in Catmandu::Store::DBI for MySQL. identifier 'id' is of type
