@@ -4,7 +4,7 @@ use Catmandu::Sane;
 use Moo;
 use namespace::clean;
 
-our $VERSION = "0.0501";
+our $VERSION = "0.0502";
 
 with 'Catmandu::Store::DBI::Handler';
 
