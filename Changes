@@ -1,6 +1,7 @@
 Revision history for Catmandu-DBI
 
 {{$NEXT}}
+  - Fix Pg quoting on index creation
 
 0.0501  2015-10-13 11:26:42 CEST
   - Shallow copy default mapping

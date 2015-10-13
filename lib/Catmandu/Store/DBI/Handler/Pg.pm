@@ -37,6 +37,7 @@ sub _create_index_sql {
     my ($self, $bag, $map) = @_;
     my $name = $bag->name;
     my $col = $map->{column};
+    my $q_col = $dbh->quote_identifier($col);
     my $sql = <<SQL;
 DO \$\$
 BEGIN
@@ -49,7 +50,7 @@ IF NOT EXISTS (
     AND    n.nspname = 'public'
     ) THEN
 
-    CREATE INDEX ${name}_${col}_idx ON public.${name} ('${col}');
+    CREATE INDEX ${name}_${col}_idx ON public.${name} (${q_col});
 END IF;
 
 END\$\$;
