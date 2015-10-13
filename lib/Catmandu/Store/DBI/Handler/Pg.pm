@@ -37,6 +37,7 @@ sub _create_index_sql {
     my ($self, $bag, $map) = @_;
     my $name = $bag->name;
     my $col = $map->{column};
+    my $dbh = $bag->store->dbh;
     my $q_col = $dbh->quote_identifier($col);
     my $sql = <<SQL;
 DO \$\$
