@@ -5,6 +5,8 @@ use Moo;
 use Catmandu::Store::DBI::Iterator;
 use namespace::clean;
 
+our $VERSION = "0.05";
+
 my $default_mapping = {
     _id => {
         column => 'id',
@@ -20,7 +22,7 @@ my $default_mapping = {
     }
 };
 
-has mapping => (is => 'ro', default => sub { $default_mapping });
+has mapping => (is => 'ro', default => sub { +{%$default_mapping} });
 has _iterator => (
     is => 'ro',
     lazy => 1,

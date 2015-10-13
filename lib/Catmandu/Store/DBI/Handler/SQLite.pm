@@ -4,6 +4,8 @@ use Catmandu::Sane;
 use Moo;
 use namespace::clean;
 
+our $VERSION = "0.05";
+
 with 'Catmandu::Store::DBI::Handler';
 
 sub _column_sql {

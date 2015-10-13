@@ -1,6 +1,8 @@
 Revision history for Catmandu-DBI
 
 {{$NEXT}}
+  - Shallow copy default mapping
+  - define VERSION in all packages
 
 0.05  2015-10-08 11:12:04 CEST
   - Column mapping
