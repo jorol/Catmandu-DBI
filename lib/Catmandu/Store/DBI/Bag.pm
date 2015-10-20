@@ -13,16 +13,20 @@ my $default_mapping = {
         type => 'string',
         index => 1,
         required => 1,
-        unique => 1
+        unique => 1,
     },
     _data => {
         column => 'data',
         type => 'binary',
-        serialize => 'all'
+        serialize => 'all',
     }
 };
 
-has mapping => (is => 'ro', default => sub { +{%$default_mapping} });
+has mapping => (
+    is => 'ro',
+    default => sub { +{%$default_mapping} },
+);
+
 has _iterator => (
     is => 'ro',
     lazy => 1,
@@ -34,7 +38,7 @@ has _iterator => (
         select
         detect
         first
-    )]
+    )],
 );
 
 with 'Catmandu::Bag';
@@ -43,6 +47,7 @@ with 'Catmandu::Serializer';
 sub BUILD {
     my ($self) = @_;
     $self->_normalize_mapping;
+    # TODO should happen lazily;
     $self->store->handler->create_table($self);
 }
 
