@@ -12,3 +12,4 @@ MYMETA.*
 Catmandu-DBI-*
 !*.t
 _build_params
+test

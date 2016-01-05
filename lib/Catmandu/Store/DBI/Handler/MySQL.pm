@@ -22,6 +22,8 @@ sub _column_sql {
         $sql .= 'INTEGER';
     } elsif ($map->{type} eq 'binary') {
         $sql .= 'LONGBLOB';
+    } elsif ($map->{type} eq 'datetime') {
+        $sql .= 'DATETIME(3)';
     }
     if ($map->{unique}) {
         $sql .= " UNIQUE";

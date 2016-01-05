@@ -131,6 +131,12 @@ sub _row_to_data {
                 next;
             }
         }
+        if ($map->{type} eq "datetime") {
+
+            my($date,$time) = split ' ', $val;
+            $val = "${date}T${time}Z";
+
+        }
         $data->{$key} = $val;
     }
 
@@ -153,6 +159,12 @@ sub _data_to_row {
                 next;
             }
             $val = $self->serialize($val // next);
+        }
+        if ($map->{type} eq "datetime") {
+
+            chop($val);
+            $val = join(' ',split('T',$val));
+
         }
         $row->{$map->{column}} = $val // next;
     }

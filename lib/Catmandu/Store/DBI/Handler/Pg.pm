@@ -20,6 +20,8 @@ sub _column_sql {
         $sql .= 'INTEGER';
     } elsif ($map->{type} eq 'binary') {
         $sql .= 'BYTEA';
+    } elsif ($map->{type} eq 'datetime') {
+        $sql .= 'TIMESTAMP';
     }
     if ($map->{array}) {
         $sql .= '[]';
