@@ -175,6 +175,10 @@ sub _data_to_row {
 
     $row;
 }
+sub drop {
+    my $self = $_[0];
+    $self->store->handler->drop_table($self);
+}
 
 1;
 

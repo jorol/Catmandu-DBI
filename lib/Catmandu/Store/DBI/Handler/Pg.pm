@@ -3,6 +3,7 @@ package Catmandu::Store::DBI::Handler::Pg;
 use Catmandu::Sane;
 use DBD::Pg ();
 use Moo;
+use Catmandu::Util qw(:is);
 use namespace::clean;
 
 our $VERSION = "0.0503";
@@ -144,6 +145,52 @@ sub add_row {
         $sth->execute or Catmandu::Error->throw($sth->errstr);
     }
     $sth->finish;
+}
+sub drop_database {
+    my( $self, $store ) = @_;
+
+    my $data_source = $store->data_source();
+    my $admin_username = is_string($store->admin_username) ? $store->admin_username : "postgres";
+    my $admin_password = is_string($store->admin_password) ? $store->admin_password : "";
+    my $admin_database = is_string($store->admin_database) ? $store->admin_database : "postgres";
+
+    my $database_name;
+
+    if( $data_source =~ /dbname=([\w\-_]+)(;)?/o ){
+        $database_name = $1;
+        my $source = substr($data_source,$-[0], $+[0]-$-[0]);
+        my $replace = "dbname=$admin_database";
+        $replace .= is_string($2) ? $2 : "";
+        $data_source =~ s/${source}/${replace}/;
+    }
+
+    #1. disconnect dbh
+    $store->DEMOLISH();
+
+    #2. make new connection to admin_database, using admin_username and admin_password
+    my $dbh = DBI->connect($data_source,$admin_username,$admin_password)
+        or Catmandu::Error->throw($DBI::errstr);
+
+    #3. execute "drop database name"
+    $database_name = $dbh->quote_identifier($database_name);
+    my $sth = $dbh->prepare("DROP DATABASE ${database_name}")
+        or Catmandu::Error->throw($dbh->errstr());
+    $sth->execute();
+    $sth->finish();
+
+    #4. disconnect admin connection
+    $dbh->disconnect();
+}
+sub drop_table {
+    my ($self, $bag) = @_;
+    my $name = $bag->name;
+    my $dbh = $bag->store->dbh;
+    my $q_name = $dbh->quote_identifier($name);
+
+    my $sql = "DROP TABLE IF EXISTS ${q_name}";
+
+    $dbh->do($sql)
+        or Catmandu::Error->throw($dbh->errstr);
 }
 
 1;

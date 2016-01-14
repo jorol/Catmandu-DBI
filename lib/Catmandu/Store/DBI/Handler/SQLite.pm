@@ -70,6 +70,22 @@ sub add_row {
     $sth->execute(@values) or Catmandu::Error->throw($sth->errstr);
     $sth->finish;
 }
+sub drop_database {
+    my $self = $_[0];
+    #$store->DEMOLISH();
+    die("not implemented");
+}
+sub drop_table {
+    my ($self, $bag) = @_;
+    my $name = $bag->name;
+    my $dbh = $bag->store->dbh;
+    my $q_name = $dbh->quote_identifier($name);
+
+    my $sql = "DROP TABLE IF EXISTS ${q_name}";
+
+    $dbh->do($sql)
+        or Catmandu::Error->throw($dbh->errstr);
+}
 
 1;
 
