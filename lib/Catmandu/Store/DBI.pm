@@ -20,11 +20,6 @@ has username => (is => 'ro', default => sub { '' });
 has password => (is => 'ro', default => sub { '' });
 has timeout => (is => 'ro', predicate => 1);
 has reconnect_after_timeout => (is => 'ro');
-
-has admin_username => (is => 'ro');
-has admin_password => (is => 'ro');
-has admin_database => (is => 'ro');
-
 has handler => (is => 'lazy');
 has _in_transaction => (
     is => 'rw',
@@ -133,7 +128,7 @@ sub DEMOLISH {
 
 sub drop {
     my $self = $_[0];
-    $self->handler()->drop_database($self);
+    $self->handler()->clear_database($self);
 }
 
 1;

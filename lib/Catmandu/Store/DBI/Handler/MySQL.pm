@@ -68,10 +68,34 @@ sub add_row {
     $sth->execute(@vals) or Catmandu::Error->throw($sth->errstr);
     $sth->finish;
 }
-sub drop_database {
-    my ( $self, $store ) = @_;
-    #$store->DEMOLISH();
-    die("not implemented");
+sub clear_database {
+    my( $self, $store ) = @_;
+
+    my $dbh = $store->dbh();
+
+    #list all tables
+    my @table_names;
+    {
+        my $query_all_tables = "SHOW TABLES";
+        my $sth = $dbh->prepare($query_all_tables)
+            or Catmandu::Error->throw($dbh->errstr());
+        $sth->execute();
+        my @row;
+        while( @row = $sth->fetchrow() ) {
+            push @table_names,$row[0];
+        }
+    }
+
+    #clear all bags
+    for my $table_name(@table_names){
+
+        my $q_name = $dbh->quote_identifier($table_name);
+        my $sql = "DROP TABLE IF EXISTS ${q_name}";
+        $dbh->do($sql)
+            or Catmandu::Error->throw($dbh->errstr);
+
+    }
+
 }
 sub drop_table {
     my ($self, $bag) = @_;

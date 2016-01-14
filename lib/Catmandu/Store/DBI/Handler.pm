@@ -8,7 +8,7 @@ our $VERSION = "0.0503";
 
 requires 'create_table';
 requires 'add_row';
-requires 'drop_database';
+requires 'clear_database';
 requires 'drop_table';
 
 1;

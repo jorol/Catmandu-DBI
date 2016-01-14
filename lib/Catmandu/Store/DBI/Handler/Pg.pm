@@ -146,40 +146,33 @@ sub add_row {
     }
     $sth->finish;
 }
-sub drop_database {
+sub clear_database {
     my( $self, $store ) = @_;
 
-    my $data_source = $store->data_source();
-    my $admin_username = is_string($store->admin_username) ? $store->admin_username : "postgres";
-    my $admin_password = is_string($store->admin_password) ? $store->admin_password : "";
-    my $admin_database = is_string($store->admin_database) ? $store->admin_database : "postgres";
+    my $dbh = $store->dbh();
 
-    my $database_name;
-
-    if( $data_source =~ /dbname=([\w\-_]+)(;)?/o ){
-        $database_name = $1;
-        my $source = substr($data_source,$-[0], $+[0]-$-[0]);
-        my $replace = "dbname=$admin_database";
-        $replace .= is_string($2) ? $2 : "";
-        $data_source =~ s/${source}/${replace}/;
+    #list all tables
+    my @table_names;
+    {
+        my $query_all_tables = "select tablename from pg_catalog.pg_tables where schemaname='public'";
+        my $sth = $dbh->prepare($query_all_tables)
+            or Catmandu::Error->throw($dbh->errstr());
+        $sth->execute();
+        while( my $row = $sth->fetchrow_hashref() ) {
+            push @table_names,$row->{tablename};
+        }
     }
 
-    #1. disconnect dbh
-    $store->DEMOLISH();
+    #clear all bags
+    for my $table_name(@table_names){
 
-    #2. make new connection to admin_database, using admin_username and admin_password
-    my $dbh = DBI->connect($data_source,$admin_username,$admin_password)
-        or Catmandu::Error->throw($DBI::errstr);
+        my $q_name = $dbh->quote_identifier($table_name);
+        my $sql = "DROP TABLE IF EXISTS ${q_name}";
+        $dbh->do($sql)
+            or Catmandu::Error->throw($dbh->errstr);
 
-    #3. execute "drop database name"
-    $database_name = $dbh->quote_identifier($database_name);
-    my $sth = $dbh->prepare("DROP DATABASE ${database_name}")
-        or Catmandu::Error->throw($dbh->errstr());
-    $sth->execute();
-    $sth->finish();
+    }
 
-    #4. disconnect admin connection
-    $dbh->disconnect();
 }
 sub drop_table {
     my ($self, $bag) = @_;
