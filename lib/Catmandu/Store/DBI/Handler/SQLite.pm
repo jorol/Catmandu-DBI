@@ -90,24 +90,14 @@ sub clear_database {
     #clear all bags
     for my $table_name(@table_names){
 
-        my $q_name = $dbh->quote_identifier($table_name);
-        my $sql = "DROP TABLE IF EXISTS ${q_name}";
-        $dbh->do($sql)
-            or Catmandu::Error->throw($dbh->errstr);
+        $store->bag($table_name)->delete_all();
 
     }
 
 }
-sub drop_table {
+sub clear_table {
     my ($self, $bag) = @_;
-    my $name = $bag->name;
-    my $dbh = $bag->store->dbh;
-    my $q_name = $dbh->quote_identifier($name);
-
-    my $sql = "DROP TABLE IF EXISTS ${q_name}";
-
-    $dbh->do($sql)
-        or Catmandu::Error->throw($dbh->errstr);
+    $bag->delete_all();
 }
 
 1;

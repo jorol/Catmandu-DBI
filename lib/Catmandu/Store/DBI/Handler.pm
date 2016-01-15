@@ -9,7 +9,7 @@ our $VERSION = "0.0503";
 requires 'create_table';
 requires 'add_row';
 requires 'clear_database';
-requires 'drop_table';
+requires 'clear_table';
 
 1;
 
