@@ -46,9 +46,15 @@ with 'Catmandu::Serializer';
 
 sub BUILD {
     my ($self) = @_;
-    $self->_normalize_mapping;
-    # TODO should happen lazily;
-    $self->store->handler->create_table($self);
+    $self->{_build} = 1;
+}
+sub _check_build {
+    my ( $self ) = @_;
+    if ( exists( $self->{_build} ) ) {
+        $self->_normalize_mapping;
+        $self->store->handler->create_table($self);
+        delete $self->{_build};
+    }
 }
 
 sub _normalize_mapping {
@@ -70,6 +76,14 @@ sub _build_iterator {
     my ($self) = @_;
     Catmandu::Store::DBI::Iterator->new(bag => $self);
 }
+
+my $check_build = sub { $_[0]->_check_build() };
+before _build_iterator => $check_build;
+before get => $check_build;
+before add => $check_build;
+before delete => $check_build;
+before delete_all => $check_build;
+before drop => $check_build;
 
 sub get {
     my ($self, $id) = @_;
