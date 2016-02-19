@@ -19,6 +19,8 @@ sub _column_sql {
         $sql .= 'INTEGER';
     } elsif ($map->{type} eq 'binary') {
         $sql .= 'BLOB';
+    } elsif ($map->{type} eq 'datetime') {
+        $sql .= 'TEXT';
     }
     if ($map->{unique}) {
         $sql .= " UNIQUE";
