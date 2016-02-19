@@ -1,6 +1,8 @@
 Revision history for Catmandu-DBI
 
 {{$NEXT}}
+
+0.0504  2016-02-19 12:31:06 CET
   - support field 'datetime'
 
 0.0503  2015-10-13 16:13:54 CEST
