@@ -15,7 +15,11 @@ with 'Catmandu::Transactional';
 has data_source => (
     is => 'ro',
     required => 1,
-    trigger => sub { $_[0] =~ /^DBI:/i ? $_[0] : "DBI:$_[0]" },
+    trigger => sub {
+        my $ds = $_[0]->{data_source};
+        $ds = $ds =~ /^DBI:/i ? $ds : "DBI:$ds";
+        $_[0]->{data_source} = $ds;
+    },
 );
 has username => (is => 'ro', default => sub { '' });
 has password => (is => 'ro', default => sub { '' });
