@@ -7,7 +7,7 @@ use Catmandu::Store::DBI::Bag;
 use Moo;
 use namespace::clean;
 
-our $VERSION = "0.0504";
+our $VERSION = "0.0505";
 
 with 'Catmandu::Store';
 with 'Catmandu::Transactional';
@@ -142,12 +142,17 @@ Version 0.0424
 
 =head1 SYNOPSIS
 
-    use Catmandu::Store::DBI;
+    # From the command line
+    $ catmandu import JSON to DBI --data_source SQLite:mydb.sqlite < data.json
 
-    my $store = Catmandu::Store::DBI->new(
-        data_source => 'DBI:mysql:database=test', # prefix "DBI:" optional
-        username => '', # optional
-        password => '', # optional
+    # From Perl code
+
+    use Catmandu;
+
+    my $store = Catmandu->store('DBI',
+        data_source => 'dbi:mysql:database=test', 
+        username => 'foo', # optional
+        password => 'bar', # optional
     );
 
     my $obj1 = $store->bag->add({ name => 'Patrick' });
@@ -167,20 +172,69 @@ Version 0.0424
     $store->bag->each(sub { ... });
     $store->bag->take(10)->each(sub { ... });
 
-The L<catmandu> command line client can be used like this:
-
-    catmandu import JSON to DBI --data_source SQLite:mydb.sqlite < data.json
-
 =head1 DESCRIPTION
 
 A Catmandu::Store::DBI is a Perl package that can store data into
-DBI backed databases. The database as a whole is called a 'store'
-(L<Catmandu::Store>. Databases also have compartments (e.g. tables)
-called 'bags' (L<Catmandu::Bag>).
+DBI backed databases. The database as a whole is  a 'store'
+L<Catmandu::Store>. Databases tables are 'bags' (L<Catmandu::Bag>). 
 
-=head1 COLUMN MAPPING
+Databases need to be preconfigured for accepting Catmandu data. When 
+no specialized Catmandu tables exist in a database then Catmandu will 
+create them automatically. See  "DATABASE CONFIGURATION" below.
 
-The default behavior is to map the C<_id> of the record to the C<id> column and serialize all other data in the C<data> column. This behavior can be changed with mapping option:
+DO NOT USE Catmandu::Store::DBI on an existing database! Tables and 
+data can be deleted and changed.
+
+=head1 CONFIGURATION
+
+=over
+
+=item data_source
+
+Required. The connection parameters to the database. See L<DBI> for more information.
+
+Examples:
+    
+      dbi:mysql:foobar   <= a local mysql database 'foobar'
+      dbi:Pg:dbname=foobar;host=myserver.org;port=5432 <= a remote PostGres database
+      dbi:SQLite:mydb.sqlite <= a local SQLLite file based database mydb.sqlite
+      dbi:Oracle:host=myserver.org;sid=data01 <= a remote Oracle database
+
+Drivers for each database need to be available on your computer. Install then with:
+
+    cpanm DBD::mysql
+    cpanm DBD::Pg
+    cpanm DBD::SQLite
+    cpanm DBD::Oracle
+
+=item user
+
+Optional. A user name to connect to the database
+
+=item password
+
+Optional. A password for connecting to the database
+
+=item timeout
+
+Optional. Timeout for a inactive database handle. When timeout is reached, Catmandu 
+checks if the connection is still alive (by use of ping) or it recreates the connection.
+See TIMEOUTS below for more information.
+
+=item reconnect_after_timeout
+
+Optional. When a timeout is reached, Catmandu reconnects to the database. By 
+default set to '0'
+
+=back
+
+=head1 DATABASE CONFIGURATION
+
+When no tables exists for storing data in the database, then Catmandu
+will create them. By default tables are created for each L<Catmandu::Bag>
+which contain an '_id' and 'data' column. 
+
+This behavior can be changed with mapping option:
 
     my $store = Catmandu::Store::DBI->new(
         data_source => 'DBI:mysql:database=test',
@@ -232,31 +286,9 @@ Boolean option, default is C<0>.
 
 =back
 
-=head1 METHODS
+=head1 TIMEOUT
 
-=head2 new(data_source => $data_source)
-
-Create a new Catmandu::Store::DBI store using a DBI $data_source. The
-prefix "DBI:" is added automatically if needed.
-
-Extra options for method new:
-
-timeout
-
-        timeout for a inactive database handle.
-        when timeout is reached, Catmandu checks if the connection is still alive (by use of ping),
-        or it recreates the connection.
-
-        By default set to undef.
-
-reconnect_after_timeout
-
-        when timeout is reached, Catmandu does not check the connection, but simply reconnects.
-
-        By default set to '0'
-
-It's good practice to set the timeout high enough.
-When using transactions, one should avoid this situation:
+It is a good practice to set the timeout high enough. When using transactions, one should avoid this situation:
 
     $bag->store->transaction(sub{
         $bag->add({ _id => "1" });
@@ -277,11 +309,6 @@ This has the following reasons:
     4.  this new connection handle is used now. We're still in the method "transaction", but there is no longer a real transaction at database level.
     5.  second record is added (committed)
     6.  commit is issued. But this unnecessary, so the database handle throws a warning.
-
-
-=head2 bag($name)
-
-Create or retieve a bag with name $name. Returns a Catmandu::Bag.
 
 =head1 SEE ALSO
 
