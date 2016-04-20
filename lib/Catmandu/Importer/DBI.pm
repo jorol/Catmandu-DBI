@@ -57,7 +57,13 @@ Catmandu::Importer::DBI - Catmandu module to import data from any DBI source
 
 =head1 SYNOPSIS
 
- use Catmandu::Importer::DBI;
+ # From the command line 
+
+ $ catmandu convert DBI --dsn dbi:mysql:foobar --user foo --password bar --query "select * from table"
+
+ # From Perl code
+
+ use Catmandu;
 
  my %attrs = (
         dsn => 'dbi:mysql:foobar' ,
@@ -66,7 +72,7 @@ Catmandu::Importer::DBI - Catmandu module to import data from any DBI source
         query => 'select * from table'
  );
 
- my $importer = Catmandu::Importer::DBI->new(%attrs);
+ my $importer = Catmandu->importer('DBI',%attrs);
 
  # Optional set extra parameters on the database handle
  # $importer->dbh->{LongReadLen} = 1024 * 64;
@@ -76,10 +82,46 @@ Catmandu::Importer::DBI - Catmandu module to import data from any DBI source
 	...
  });
 
+=head1 DESCRIPTION
 
- # or
+This L<Catmandu::Importer> can be used to access data stored in a relational database.
+Given a database handle and a SQL query an export of hits will be exported.
 
- $ catmandu convert DBI --dsn dbi:mysql:foobar --user foo --password bar --query "select * from table"
+=head1 CONFIGURATION
+
+=over
+
+=item dsn
+
+Required. The connection parameters to the database. See L<DBI> for more information.
+
+Examples:
+    
+      dbi:mysql:foobar   <= a local mysql database 'foobar'
+      dbi:Pg:dbname=foobar;host=myserver.org;port=5432 <= a remote PostGres database
+      dbi:SQLite:mydb.sqlite <= a local SQLLite file based database mydb.sqlite
+      dbi:Oracle:host=myserver.org;sid=data01 <= a remote Oracle database
+
+Drivers for each database need to be available on your computer. Install then with:
+
+    cpanm DBD::mysql
+    cpanm DBD::Pg
+    cpanm DBD::SQLite
+    cpanm DBD::Oracle
+
+=item user
+
+Optional. A user name to connect to the database
+
+=item password
+
+Optional. A password for connecting to the database
+
+=item query
+
+Required. An SQL query to be executed against the datbase. 
+
+=back
 
 =head1 SEE ALSO
 

@@ -6,6 +6,19 @@ our $VERSION = "0.0504";
 
 Catmandu::DBI - Catmandu tools to communicate with DBI based interfaces
 
+=head1 SYNOPSIS
+
+    # From the command line 
+
+    # Export data from a relational database
+    $ catmandu convert DBI --dsn dbi:mysql:foobar --user foo --password bar --query "select * from table"
+    
+    # Import data into a relational database
+    $ catmandu import JSON to DBI --data_source dbi:SQLite:mydb.sqlite < data.json
+
+    # Export data from a relational database
+    $ catmandu export DBI --data_source dbi:SQLite:mydb.sqlite to JSON
+
 =head1 MODULES
 
 L<Catmandu::Importer::DBI>
