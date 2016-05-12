@@ -6,13 +6,23 @@ our $VERSION = "0.0505";
 
 Catmandu::DBI - Catmandu tools to communicate with DBI based interfaces
 
+=begin markdown
+
+# STATUS
+
+[![Build Status](https://travis-ci.org/LibreCat/Catmandu-DBI.svg?branch=master)](https://travis-ci.org/LibreCat/Catmandu-DBI)
+[![Coverage](https://coveralls.io/repos/LibreCat/Catmandu-DBI/badge.png?branch=master)](https://coveralls.io/r/LibreCat/Catmandu-DBI)
+[![CPANTS kwalitee](http://cpants.cpanauthors.org/dist/Catmandu-DBI.png)](http://cpants.cpanauthors.org/dist/Catmandu-DBI)
+
+=end markdown
+
 =head1 SYNOPSIS
 
-    # From the command line 
+    # From the command line
 
     # Export data from a relational database
     $ catmandu convert DBI --dsn dbi:mysql:foobar --user foo --password bar --query "select * from table"
-    
+
     # Import data into a relational database
     $ catmandu import JSON to DBI --data_source dbi:SQLite:mydb.sqlite < data.json
 
