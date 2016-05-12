@@ -40,6 +40,11 @@ has _iterator => (
         first
     )],
 );
+has autocreate => (
+    is => 'ro',
+    lazy => 1,
+    default => sub { 1; }
+);
 
 with 'Catmandu::Bag';
 with 'Catmandu::Serializer';
@@ -47,8 +52,13 @@ with 'Catmandu::Serializer';
 sub BUILD {
     my ($self) = @_;
     $self->_normalize_mapping;
+
     # TODO should happen lazily;
-    $self->store->handler->create_table($self);
+    if ( $self->autocreate ) {
+
+        $self->store->handler->create_table($self);
+
+    }
 }
 
 sub _normalize_mapping {

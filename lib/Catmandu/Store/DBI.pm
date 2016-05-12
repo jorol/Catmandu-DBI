@@ -150,7 +150,7 @@ Version 0.0424
     use Catmandu;
 
     my $store = Catmandu->store('DBI',
-        data_source => 'dbi:mysql:database=test', 
+        data_source => 'dbi:mysql:database=test',
         username => 'foo', # optional
         password => 'bar', # optional
     );
@@ -176,13 +176,13 @@ Version 0.0424
 
 A Catmandu::Store::DBI is a Perl package that can store data into
 DBI backed databases. The database as a whole is  a 'store'
-L<Catmandu::Store>. Databases tables are 'bags' (L<Catmandu::Bag>). 
+L<Catmandu::Store>. Databases tables are 'bags' (L<Catmandu::Bag>).
 
-Databases need to be preconfigured for accepting Catmandu data. When 
-no specialized Catmandu tables exist in a database then Catmandu will 
+Databases need to be preconfigured for accepting Catmandu data. When
+no specialized Catmandu tables exist in a database then Catmandu will
 create them automatically. See  "DATABASE CONFIGURATION" below.
 
-DO NOT USE Catmandu::Store::DBI on an existing database! Tables and 
+DO NOT USE Catmandu::Store::DBI on an existing database! Tables and
 data can be deleted and changed.
 
 =head1 CONFIGURATION
@@ -194,7 +194,7 @@ data can be deleted and changed.
 Required. The connection parameters to the database. See L<DBI> for more information.
 
 Examples:
-    
+
       dbi:mysql:foobar   <= a local mysql database 'foobar'
       dbi:Pg:dbname=foobar;host=myserver.org;port=5432 <= a remote PostGres database
       dbi:SQLite:mydb.sqlite <= a local SQLLite file based database mydb.sqlite
@@ -217,13 +217,13 @@ Optional. A password for connecting to the database
 
 =item timeout
 
-Optional. Timeout for a inactive database handle. When timeout is reached, Catmandu 
+Optional. Timeout for a inactive database handle. When timeout is reached, Catmandu
 checks if the connection is still alive (by use of ping) or it recreates the connection.
 See TIMEOUTS below for more information.
 
 =item reconnect_after_timeout
 
-Optional. When a timeout is reached, Catmandu reconnects to the database. By 
+Optional. When a timeout is reached, Catmandu reconnects to the database. By
 default set to '0'
 
 =back
@@ -232,7 +232,7 @@ default set to '0'
 
 When no tables exists for storing data in the database, then Catmandu
 will create them. By default tables are created for each L<Catmandu::Bag>
-which contain an '_id' and 'data' column. 
+which contain an '_id' and 'data' column.
 
 This behavior can be changed with mapping option:
 
@@ -241,6 +241,7 @@ This behavior can be changed with mapping option:
         bags => {
             # books table
             books => {
+                autocreate => 1,
                 mapping => {
                     # these keys will be directly mapped to columns
                     # all other keys will be serialized in the data column
@@ -285,6 +286,13 @@ Boolean option, default is C<0>.
 Boolean option, default is C<0>.
 
 =back
+
+=head2  autocreate (0|1)
+
+By default, non existing tables are created automatically. Any subsequent changes to the mapping will be
+ignored.
+
+If your database user does not have the appropriate rights to create tables, one should set autocreate to '0'.
 
 =head1 TIMEOUT
 
