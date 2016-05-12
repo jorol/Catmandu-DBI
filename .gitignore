@@ -7,8 +7,6 @@ blib
 Build
 Makefile.PL
 MANIFEST*
-META.*
-MYMETA.*
 Catmandu-DBI-*
 !*.t
 _build_params
