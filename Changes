@@ -1,6 +1,8 @@
 Revision history for Catmandu-DBI
 
 {{$NEXT}}
+
+0.0506  2016-06-08 14:51:05 CEST
   - add prefix 'DBI:' to data_source automatically
   - fix memory leak in Catmandu::Store::DBI::Iterator
 
