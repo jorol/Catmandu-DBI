@@ -1,6 +1,8 @@
 Revision history for Catmandu-DBI
 
 {{$NEXT}}
+
+0.0507  2016-06-21 14:20:23 CEST
   - remove files MYMETA.json and MYMETA.yml
 
 0.0506  2016-06-08 14:51:05 CEST

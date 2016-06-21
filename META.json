@@ -63,7 +63,7 @@
          "web" : "https://github.com/LibreCat/Catmandu-DBI"
       }
    },
-   "version" : "0.0506",
+   "version" : "0.0507",
    "x_contributors" : [
       "Jakob Voss <jakob@nichtich.de>",
       "Nicolas Franck <nicolas.franck@ugent.be>",
