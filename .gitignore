@@ -12,5 +12,5 @@ Catmandu-DBI-*
 _build_params
 test
 cover_db
+META.json
 MYMETA.*
-META.*
