@@ -4,7 +4,7 @@ use Catmandu::Sane;
 use DBI;
 use Moo;
 
-our $VERSION = '0.0509';
+our $VERSION = '0.0510';
 
 with 'Catmandu::Importer';
 
