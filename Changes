@@ -1,6 +1,8 @@
 Revision history for Catmandu-DBI
 
 {{$NEXT}}
+
+0.0508  2016-10-04 14:29:12 CEST
   - set sqlite_use_immediate_transaction to true by default to allow safer
     multiprocess access
 
