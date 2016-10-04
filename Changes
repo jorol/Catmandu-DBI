@@ -1,6 +1,8 @@
 Revision history for Catmandu-DBI
 
 {{$NEXT}}
+  - set sqlite_use_immediate_transaction to true by default to allow safer
+    multiprocess access
 
 0.0506  2016-06-08 14:51:05 CEST
   - add prefix 'DBI:' to data_source automatically
