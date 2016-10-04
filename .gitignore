@@ -13,3 +13,4 @@ _build_params
 test
 cover_db
 MYMETA.*
+META.*
