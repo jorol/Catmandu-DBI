@@ -5,7 +5,7 @@ use Catmandu::Util qw(is_value is_string is_array_ref);
 use Moo;
 use namespace::clean;
 
-our $VERSION = "0.0508";
+our $VERSION = "0.0509";
 
 with 'Catmandu::Iterable';
 

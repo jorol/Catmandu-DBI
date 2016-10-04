@@ -4,7 +4,7 @@ use Catmandu::Sane;
 use Moo::Role;
 use namespace::clean;
 
-our $VERSION = "0.0508";
+our $VERSION = "0.0509";
 
 requires 'create_table';
 requires 'add_row';
