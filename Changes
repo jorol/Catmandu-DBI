@@ -1,6 +1,8 @@
 Revision history for Catmandu-DBI
 
 {{$NEXT}}
+  - set sqlite_use_immediate_transaction to true by default to allow safer
+    multiprocess access
 
 0.0507  2016-06-21 14:20:23 CEST
   - remove files MYMETA.json and MYMETA.yml

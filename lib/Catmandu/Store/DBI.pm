@@ -65,6 +65,7 @@ sub _build_dbh {
         AutoCommit => 1,
         RaiseError => 1,
         mysql_auto_reconnect => 1,
+        sqlite_use_immediate_transaction => 1,
     };
     my $dbh = DBI->connect(
         $self->data_source,
