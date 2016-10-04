@@ -1,6 +1,7 @@
 Revision history for Catmandu-DBI
 
 {{$NEXT}}
+  - use installer ModuleBuild to make Travis happy
 
 0.0509  2016-10-04 14:59:51 CEST
   - META file
