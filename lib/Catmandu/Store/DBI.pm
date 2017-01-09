@@ -133,6 +133,12 @@ sub DEMOLISH {
 
 1;
 
+__END__
+
+=pod
+
+=encoding utf8
+
 =head1 NAME
 
 Catmandu::Store::DBI - A Catmandu::Store plugin for DBI based interfaces
