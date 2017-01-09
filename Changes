@@ -1,6 +1,7 @@
 Revision history for Catmandu-DBI
 
 {{$NEXT}}
+  - more pod
 
 0.0510  2016-10-04 15:20:17 CEST
   - use installer ModuleBuild to make Travis happy
