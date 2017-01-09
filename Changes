@@ -2,6 +2,16 @@ Revision history for Catmandu-DBI
 
 {{$NEXT}}
 
+0.0510  2016-10-04 15:20:17 CEST
+  - use installer ModuleBuild to make Travis happy
+
+0.0509  2016-10-04 14:59:51 CEST
+  - META file
+
+0.0508  2016-10-04 14:29:12 CEST
+  - set sqlite_use_immediate_transaction to true by default to allow safer
+    multiprocess access
+
 0.0507  2016-06-21 14:20:23 CEST
   - remove files MYMETA.json and MYMETA.yml
 
