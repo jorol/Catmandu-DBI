@@ -1,6 +1,8 @@
 Revision history for Catmandu-DBI
 
 {{$NEXT}}
+
+0.06  2017-09-01 12:39:01 CEST
   - retain sth for faster iteration
 
 0.0511  2017-01-09 13:56:38 CET

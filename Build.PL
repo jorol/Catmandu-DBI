@@ -18,7 +18,7 @@ my %module_build_args = (
     "Nicolas Franck"
   ],
   "dist_name" => "Catmandu-DBI",
-  "dist_version" => "0.0511",
+  "dist_version" => "0.06",
   "license" => "perl",
   "module_name" => "Catmandu::DBI",
   "recursive_test_files" => 1,
