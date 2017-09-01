@@ -93,7 +93,7 @@ sub generator {
 
         unless (defined $rows && @$rows) {
             my $dbh = $bag->store->dbh;
-            #DO NOT USE prepare_cached as it holds previous data in memory, leading to a memory leak!
+            # DO NOT USE prepare_cached as it holds previous data in memory, leading to a memory leak!
             my $sth = $dbh->prepare($self->_select_sql($start))
                 or Catmandu::Error->throw($dbh->errstr);
             $sth->execute(@$binds)
