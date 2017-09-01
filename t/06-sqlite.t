@@ -48,7 +48,7 @@ else {
         lives_ok(
             sub {
                 $bag = Catmandu::Store::DBI->new(
-                    data_source => "dbi:SQLite:dbname=:memory:")->bag();
+                    data_source => "dbi:SQLite:dbname=:memory:")->bag;
             },
             "no mapping - bag created"
         );
