@@ -89,21 +89,17 @@ sub generator {
         state $sth;
 
         unless (defined($sth)) {
-
             my $dbh = $bag->store->dbh;
             $sth = $dbh->prepare($self->_select_sql())
                 or Catmandu::Error->throw($dbh->errstr);
             $sth->execute(@$binds) or Catmandu::Error->throw($sth->errstr);
-
         }
 
         my $row = $sth->fetchrow_hashref();
 
         unless (defined($row)) {
-
             $sth->finish;
             return;
-
         }
 
         $bag->_row_to_data($row);
