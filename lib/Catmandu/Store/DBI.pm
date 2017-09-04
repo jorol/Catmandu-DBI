@@ -142,12 +142,33 @@ Version 0.0424
 
 =head1 SYNOPSIS
 
+    # From the command line
+    $ catmandu import JSON to DBI --data_source SQLite:mydb.sqlite < data.json
+
+    # Or via a configuration file
+    $ cat catmandu.yml
+    ---
+    store:
+       mydb:
+         package: DBI
+         options:
+            data_source: "dbi:mysql:database=mydb"
+            username: xyz
+            password: xyz
+    ...
+    $ catmandu import JSON to mydb < data.json
+    $ catmandu export mydb to YAML > data.yml
+    $ catmandu export mydb --id 012E929E-FF44-11E6-B956-AE2804ED5190 to JSON > record.json
+    $ catmandu count mydb
+    $ catmandy delete mydb
+
+    # From perl
     use Catmandu::Store::DBI;
 
     my $store = Catmandu::Store::DBI->new(
-        data_source => 'DBI:mysql:database=test', # prefix "DBI:" optional
-        username => '', # optional
-        password => '', # optional
+        data_source => 'DBI:mysql:database=mydb', # prefix "DBI:" optional
+        username => 'xyz', # optional
+        password => 'xyz', # optional
     );
 
     my $obj1 = $store->bag->add({ name => 'Patrick' });
@@ -180,7 +201,9 @@ called 'bags' (L<Catmandu::Bag>).
 
 =head1 COLUMN MAPPING
 
-The default behavior is to map the C<_id> of the record to the C<id> column and serialize all other data in the C<data> column. This behavior can be changed with mapping option:
+The default behavior is to map the C<_id> of the record to the C<id> column and
+serialize all other data in the C<data> column. This behavior can be changed
+with mapping option:
 
     my $store = Catmandu::Store::DBI->new(
         data_source => 'DBI:mysql:database=test',
