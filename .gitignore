@@ -1,3 +1,4 @@
+.tidyall.d
 !.gitignore
 .DS_Store
 *.swp
@@ -7,9 +8,10 @@ blib
 Build
 Makefile.PL
 MANIFEST*
-META.*
-MYMETA.*
 Catmandu-DBI-*
 !*.t
 _build_params
 test
+cover_db
+META.json
+MYMETA.*
