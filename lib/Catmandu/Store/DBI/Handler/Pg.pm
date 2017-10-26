@@ -24,7 +24,10 @@ sub _column_sql {
         $sql .= 'BYTEA';
     }
     elsif ($map->{type} eq 'datetime') {
-        $sql .= 'TIMESTAMP';
+        $sql .= 'TIMESTAMP(0)';
+    }
+    elsif ($map->{type} eq 'datetime_milli') {
+        $sql .= 'TIMESTAMP(3)';
     }
     if ($map->{array}) {
         $sql .= '[]';
@@ -159,4 +162,3 @@ sub add_row {
 }
 
 1;
-

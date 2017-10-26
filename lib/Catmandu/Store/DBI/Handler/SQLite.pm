@@ -25,6 +25,9 @@ sub _column_sql {
     elsif ($map->{type} eq 'datetime') {
         $sql .= 'TEXT';
     }
+    elsif ($map->{type} eq 'datetime_milli') {
+        $sql .= 'TEXT';
+    }
     if ($map->{unique}) {
         $sql .= " UNIQUE";
     }
@@ -79,4 +82,3 @@ sub add_row {
 }
 
 1;
-

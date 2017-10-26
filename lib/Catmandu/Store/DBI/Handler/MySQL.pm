@@ -29,6 +29,12 @@ sub _column_sql {
     elsif ($map->{type} eq 'datetime') {
         $sql .= 'DATETIME';
     }
+    elsif ($map->{type} eq 'datetime_milli') {
+        if ($dbh->{mysql_clientversion} < 50640)  {
+            Catmandu::NotImplemented->throw("DATETIME(3) only for MySQL > 5.6.4");
+        }
+        $sql .= 'DATETIME(3)';
+    }
     if ($map->{unique}) {
         $sql .= " UNIQUE";
     }
