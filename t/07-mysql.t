@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Test::More;
 use Test::Exception;
+use utf8;
 
 require Catmandu::Store::DBI;
 require Catmandu::Serializer::json;
@@ -52,10 +53,19 @@ else {
         $sth->fetchrow_hashref;
     }
 
+    sub drop {
+        my ($dbh, $table, $id_field, $id) = @_;
+        my $sql
+            = "DROP TABLE ". $dbh->quote_identifier($table);
+        $dbh->do($sql);
+    }
+
     my $record = {
         _id    => "mylittlepony",
         title  => "My little pony",
-        author => "unknown"
+        author => "unknown",
+        date_updated => "2017-01-01 10:00:00",
+        number => "42"
     };
     my $serializer = Catmandu::Serializer::json->new();
 
@@ -81,6 +91,8 @@ else {
         delete $expected->{data}->{_id};
 
         is_deeply($row, $expected, "no mapping - expected fields created");
+
+        drop($bag->store->dbh, $bag_name);
     }
 
     #explicit mapping
@@ -104,7 +116,11 @@ else {
                                 title =>
                                     {column => "title", type => "string"},
                                 author =>
-                                    {column => "author", type => "string"}
+                                    {column => "author", type => "string"},
+                                date_updated =>
+                                    {column => "date_updated", type => "datetime"},
+                                number =>
+                                    {column => "number", type => "integer"},
                             }
                         }
                     }
@@ -122,7 +138,9 @@ else {
         is_deeply $row, $record, "mapping given - expected fields created";
 
         lives_ok(sub {$bag->count}, "mapping given - count ok");
+        drop($bag->store->dbh, $bag_name);
     }
+
     {
         my $bag;
         my $bag_name = "data3";
@@ -143,7 +161,11 @@ else {
                                 title =>
                                     {column => "title", type => "string"},
                                 author =>
-                                    {column => "author", type => "string"}
+                                    {column => "author", type => "string"},
+                                date_updated =>
+                                    {column => "date_updated", type => "datetime"},
+                                number =>
+                                    {column => "number", type => "integer"},
                             }
                         }
                     }
@@ -195,7 +217,7 @@ else {
         );
         isnt($r, undef,
             "iterator - select(key => value)->first contains one record");
-
+        drop($bag->store->dbh, $bag_name);
     }
 
     done_testing 19;

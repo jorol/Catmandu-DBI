@@ -27,7 +27,7 @@ sub _column_sql {
         $sql .= 'LONGBLOB';
     }
     elsif ($map->{type} eq 'datetime') {
-        $sql .= 'DATETIME(3)';
+        $sql .= 'DATETIME';
     }
     if ($map->{unique}) {
         $sql .= " UNIQUE";
@@ -80,4 +80,3 @@ sub add_row {
 }
 
 1;
-
