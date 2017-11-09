@@ -1,6 +1,8 @@
 Revision history for Catmandu-DBI
 
 {{$NEXT}}
+  - revert the changes made in 0.06 because of high memory usage in mysql and
+    postgresql
 
 0.06  2017-09-01 12:39:01 CEST
   - retain sth for faster iteration
