@@ -14,9 +14,19 @@ has where => (is => 'ro');
 has binds => (is => 'lazy');
 has total => (is => 'ro');
 has start => (is => 'lazy');
+has limit => (is => 'lazy');
 
-sub _build_binds {[]}
-sub _build_start {0}
+sub _build_binds { [] }
+sub _build_start { 0 }
+sub _build_limit {
+    my ($self) = @_;
+    my $limit = 100;
+    my $total = $self->total;
+    if (defined $total && $total < $limit) {
+        $limit = $total;
+    }
+    $limit;
+}
 
 sub _q_id {
     $_[0]->bag->store->dbh->quote_identifier($_[1]);
@@ -28,27 +38,15 @@ sub _max_limit {    # should be plenty large
 }
 
 sub _select_sql {
-    my $self       = $_[0];
-    my $bag        = $self->bag;
-    my $id_field   = $bag->mapping->{_id}->{column};
+    my ($self, $start) = @_;
+    my $bag = $self->bag;
+    my $id_field = $bag->mapping->{_id}->{column};
     my $q_id_field = $self->_q_id($id_field);
-    my $where      = $self->where;
-    my $start      = $self->start;
-    my $total      = $self->total;
-    my $sql        = "SELECT * FROM " . $self->_q_id($self->bag->name);
+    my $where = $self->where;
+    my $limit = $self->limit;
+    my $sql = "SELECT * FROM ".$self->_q_id($self->bag->name);
     $sql .= " WHERE $where" if $where;
-    $sql .= " ORDER BY $q_id_field";
-
-    if ($total) {
-        $sql .= " LIMIT $total";
-    }
-    elsif ($start) {    # no offset without limit
-        $sql .= " LIMIT " . _max_limit;
-    }
-    if ($start) {
-        $sql .= " OFFSET $start";
-    }
-
+    $sql .= " ORDER BY $q_id_field LIMIT $limit OFFSET $start";
     $sql;
 }
 
@@ -82,28 +80,32 @@ sub _count_sql {
 
 sub generator {
     my ($self) = @_;
-    my $bag    = $self->bag;
-    my $binds  = $self->binds;
+    my $bag = $self->bag;
+    my $binds = $self->binds;
+    my $total = $self->total;
+    my $start = $self->start;
+    my $limit = $self->limit;
 
     sub {
-        state $sth;
+        state $rows;
 
-        unless (defined($sth)) {
+        return if defined $total && !$total;
+
+        unless (defined $rows && @$rows) {
             my $dbh = $bag->store->dbh;
-            $sth = $dbh->prepare($self->_select_sql())
+            #DO NOT USE prepare_cached as it holds previous data in memory, leading to a memory leak!
+            my $sth = $dbh->prepare($self->_select_sql($start))
                 or Catmandu::Error->throw($dbh->errstr);
-            $sth->execute(@$binds) or Catmandu::Error->throw($sth->errstr);
-        }
-
-        my $row = $sth->fetchrow_hashref();
-
-        unless (defined($row)) {
+            $sth->execute(@$binds)
+                or Catmandu::Error->throw($sth->errstr);
+            $rows = $sth->fetchall_arrayref({});
             $sth->finish;
-            return;
+            $start += $limit;
         }
 
-        $bag->_row_to_data($row);
-
+        my $data = $bag->_row_to_data(shift(@$rows) // return);
+        $total-- if defined $total;
+        $data;
     };
 }
 
