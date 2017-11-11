@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Test::More;
 use Test::Exception;
+use utf8;
 
 require Catmandu::Store::DBI;
 require Catmandu::Serializer::json;
@@ -53,9 +54,9 @@ else {
     }
 
     my $record = {
-        _id    => "mylittlepony",
+        _id    => "彩虹小馬",
         title  => "My little pony",
-        author => "unknown"
+        author => "孩之寶"
     };
     my $serializer = Catmandu::Serializer::json->new();
 

@@ -61,7 +61,10 @@ sub _build_dbh {
         AutoCommit                       => 1,
         RaiseError                       => 1,
         mysql_auto_reconnect             => 1,
+        mysql_enable_utf8                => 1,
+        pg_utf8_strings                  => 1,
         sqlite_use_immediate_transaction => 1,
+        sqlite_unicode                   => 1,
     };
     my $dbh
         = DBI->connect($self->data_source, $self->username, $self->password,

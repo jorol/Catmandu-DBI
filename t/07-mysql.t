@@ -61,9 +61,9 @@ else {
     }
 
     my $record = {
-        _id    => "mylittlepony",
+        _id    => "彩虹小馬",
         title  => "My little pony",
-        author => "unknown",
+        author => "孩之寶",
         date_updated => "2017-01-01 10:00:00",
         number => "42"
     };
