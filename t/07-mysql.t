@@ -55,17 +55,16 @@ else {
 
     sub drop {
         my ($dbh, $table, $id_field, $id) = @_;
-        my $sql
-            = "DROP TABLE ". $dbh->quote_identifier($table);
+        my $sql = "DROP TABLE " . $dbh->quote_identifier($table);
         $dbh->do($sql);
     }
 
     my $record = {
-        _id    => "彩虹小馬",
-        title  => "My little pony",
-        author => "孩之寶",
+        _id          => "彩虹小馬",
+        title        => "My little pony",
+        author       => "孩之寶",
         date_updated => "2017-01-01 10:00:00",
-        number => "42"
+        number       => "42"
     };
     my $serializer = Catmandu::Serializer::json->new();
 
@@ -117,8 +116,10 @@ else {
                                     {column => "title", type => "string"},
                                 author =>
                                     {column => "author", type => "string"},
-                                date_updated =>
-                                    {column => "date_updated", type => "datetime"},
+                                date_updated => {
+                                    column => "date_updated",
+                                    type   => "datetime"
+                                },
                                 number =>
                                     {column => "number", type => "integer"},
                             }
@@ -162,8 +163,10 @@ else {
                                     {column => "title", type => "string"},
                                 author =>
                                     {column => "author", type => "string"},
-                                date_updated =>
-                                    {column => "date_updated", type => "datetime"},
+                                date_updated => {
+                                    column => "date_updated",
+                                    type   => "datetime"
+                                },
                                 number =>
                                     {column => "number", type => "integer"},
                             }

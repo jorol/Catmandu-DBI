@@ -36,10 +36,8 @@ else {
 
     lives_ok(
         sub {
-            $bag
-                = Catmandu::Store::DBI->new(
-                data_source => "dbi:SQLite:dbname=$file")->bag(
-                );
+            $bag = Catmandu::Store::DBI->new(
+                data_source => "dbi:SQLite:dbname=$file")->bag();
         },
         "bag created"
     );

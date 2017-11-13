@@ -16,12 +16,13 @@ has total => (is => 'ro');
 has start => (is => 'lazy');
 has limit => (is => 'lazy');
 
-sub _build_binds { [] }
-sub _build_start { 0 }
+sub _build_binds {[]}
+sub _build_start {0}
+
 sub _build_limit {
     my ($self) = @_;
-    my $limit = 100;
-    my $total = $self->total;
+    my $limit  = 100;
+    my $total  = $self->total;
     if (defined $total && $total < $limit) {
         $limit = $total;
     }
@@ -39,12 +40,12 @@ sub _max_limit {    # should be plenty large
 
 sub _select_sql {
     my ($self, $start) = @_;
-    my $bag = $self->bag;
-    my $id_field = $bag->mapping->{_id}->{column};
+    my $bag        = $self->bag;
+    my $id_field   = $bag->mapping->{_id}->{column};
     my $q_id_field = $self->_q_id($id_field);
-    my $where = $self->where;
-    my $limit = $self->limit;
-    my $sql = "SELECT * FROM ".$self->_q_id($self->bag->name);
+    my $where      = $self->where;
+    my $limit      = $self->limit;
+    my $sql        = "SELECT * FROM " . $self->_q_id($self->bag->name);
     $sql .= " WHERE $where" if $where;
     $sql .= " ORDER BY $q_id_field LIMIT $limit OFFSET $start";
     $sql;
@@ -80,11 +81,11 @@ sub _count_sql {
 
 sub generator {
     my ($self) = @_;
-    my $bag = $self->bag;
-    my $binds = $self->binds;
-    my $total = $self->total;
-    my $start = $self->start;
-    my $limit = $self->limit;
+    my $bag    = $self->bag;
+    my $binds  = $self->binds;
+    my $total  = $self->total;
+    my $start  = $self->start;
+    my $limit  = $self->limit;
 
     sub {
         state $rows;
@@ -93,11 +94,11 @@ sub generator {
 
         unless (defined $rows && @$rows) {
             my $dbh = $bag->store->dbh;
-            #DO NOT USE prepare_cached as it holds previous data in memory, leading to a memory leak!
+
+#DO NOT USE prepare_cached as it holds previous data in memory, leading to a memory leak!
             my $sth = $dbh->prepare($self->_select_sql($start))
                 or Catmandu::Error->throw($dbh->errstr);
-            $sth->execute(@$binds)
-                or Catmandu::Error->throw($sth->errstr);
+            $sth->execute(@$binds) or Catmandu::Error->throw($sth->errstr);
             $rows = $sth->fetchall_arrayref({});
             $sth->finish;
             $start += $limit;

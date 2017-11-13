@@ -160,6 +160,7 @@ sub _data_to_row {
             $val = $self->serialize($val // next);
         }
         if ($map->{type} eq "datetime") {
+
             # Translate ISO dates into datetime format
             if ($val && $val =~ /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})/) {
                 $val = "$1 $2";
