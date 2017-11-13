@@ -5,7 +5,7 @@ use DBD::Pg ();
 use Moo;
 use namespace::clean;
 
-our $VERSION = "0.07";
+our $VERSION = "0.0701";
 
 with 'Catmandu::Store::DBI::Handler';
 
