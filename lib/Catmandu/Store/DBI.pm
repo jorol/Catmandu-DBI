@@ -307,6 +307,10 @@ Boolean option, default is C<0>. Note that this options is only supported for Po
 
 Boolean option, default is C<0>.
 
+=item index
+
+Boolean option, default is C<0>. Ignored if C<unique> is true.
+
 =item required
 
 Boolean option, default is C<0>.

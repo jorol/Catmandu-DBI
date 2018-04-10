@@ -1,6 +1,7 @@
 Revision history for Catmandu-DBI
 
 {{$NEXT}}
+  - document index option
 
 0.0701  2017-11-13 09:05:26 CET
   - fix utf8 string bug
