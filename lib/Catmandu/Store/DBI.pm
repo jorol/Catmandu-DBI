@@ -7,7 +7,7 @@ use Catmandu::Store::DBI::Bag;
 use Moo;
 use namespace::clean;
 
-our $VERSION = "0.0701";
+our $VERSION = "0.0702";
 
 with 'Catmandu::Store';
 with 'Catmandu::Transactional';
