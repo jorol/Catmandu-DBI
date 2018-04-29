@@ -275,7 +275,7 @@ This behavior can be changed with mapping option:
     );
 
 For keys that have a corresponding table column configured, the method 'select' of class L<Catmandu::Store::DBI::Bag> provides
-a more efficiënt way to query records.
+a more efficient way to query records.
 
 See L<Catmandu::Store::DBI::Bag> for more information.
 
